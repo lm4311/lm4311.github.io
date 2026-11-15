@@ -1,0 +1,92 @@
+---
+// Project media: looping video if provided, else poster image, else a generated studio render.
+import { coverScene, COVER_TOP, COVER_BOTTOM, type Motif } from '../lib/cover';
+
+interface Props {
+  seed: string;
+  accent: string;
+  motif?: Motif;
+  video?: string;
+  poster?: string;
+  alt?: string;
+  class?: string;
+  /** Autoplay the loop (case-study header). Cards play on hover instead. */
+  autoplay?: boolean;
+  /** Untextured "clay render" look for the generated cover. */
+  clay?: boolean;
+  /** Show the browser's video controls (project pages). */
+  controls?: boolean;
+}
+
+const { seed, accent, motif, video, poster, alt = '', class: className = '', autoplay = false, clay = false, controls = false } =
+  Astro.props;
+const id = `c${seed.replace(/[^a-z0-9]/gi, '').toLowerCase()}${clay ? 'clay' : ''}`;
+const prims = coverScene(seed, clay ? '#bbbbbb' : accent, motif);
+const blurs = [...new Set(prims.map((p) => p.blur).filter((b): b is number => !!b))];
+const fid = (b: number) => `${id}-b${String(b).replace('.', '_')}`;
+---
+
+<div class:list={['overflow-hidden bg-surface', !/\babsolute\b/.test(className) && 'relative', className]}>
+  {
+    video ? (
+      <video
+        class="absolute inset-0 h-full w-full object-cover"
+        src={video}
+        poster={poster}
+        muted
+        loop
+        playsinline
+        preload={autoplay ? 'auto' : 'none'}
+        autoplay={autoplay}
+        controls={controls}
+        data-hover-play={!autoplay}
+        aria-hidden={controls ? undefined : 'true'}
+      />
+    ) : poster ? (
+      <img class="absolute inset-0 h-full w-full object-cover" src={poster} alt={alt} loading="lazy" />
+    ) : (
+      <svg
+        class:list={['absolute inset-0 h-full w-full', clay && 'grayscale']}
+        viewBox="0 0 160 90"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color={clay ? '#2a2b2e' : COVER_TOP} />
+            <stop offset="1" stop-color={clay ? '#141416' : COVER_BOTTOM} />
+          </linearGradient>
+          {prims.map((p, i) =>
+            p.t === 'hglow' ? (
+              <linearGradient id={`${id}-h${i}`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" style={`stop-color:${p.color};stop-opacity:0`} />
+                <stop offset="0.5" style={`stop-color:${p.color}`} />
+                <stop offset="1" style={`stop-color:${p.color};stop-opacity:0`} />
+              </linearGradient>
+            ) : null,
+          )}
+          {blurs.map((b) => (
+            <filter id={fid(b)} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation={b} />
+            </filter>
+          ))}
+        </defs>
+        <rect x="-100" y="-100" width="360" height="290" fill={`url(#${id}-bg)`} />
+        {prims.map((p, i) => {
+          const filter = p.blur ? `url(#${fid(p.blur)})` : undefined;
+          // Colors go through style so CSS variables (e.g. var(--color-accent)) work.
+          if (p.t === 'rect') return <rect x={p.x} y={p.y} width={p.w} height={p.h} style={`fill:${p.fill}`} opacity={p.o} filter={filter} />;
+          if (p.t === 'hglow') return <rect x="0" y={p.y - p.h / 2} width="160" height={p.h} fill={`url(#${id}-h${i})`} opacity={p.o} filter={filter} />;
+          const paint = `fill:${'fill' in p && p.fill ? p.fill : 'none'};stroke:${p.stroke ?? 'none'}`;
+          if (p.t === 'circle') return <circle cx={p.x} cy={p.y} r={p.r} style={paint} stroke-width={p.sw} opacity={p.o} filter={filter} />;
+          const points = p.pts.map(([x, y]) => `${x},${y}`).join(' ');
+          return p.closed ? (
+            <polygon points={points} style={paint} stroke-width={p.sw} opacity={p.o} filter={filter} />
+          ) : (
+            <polyline points={points} style={paint} stroke-width={p.sw} stroke-linejoin="round" opacity={p.o} filter={filter} />
+          );
+        })}
+      </svg>
+    )
+  }
+</div>

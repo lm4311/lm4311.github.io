@@ -1,0 +1,27 @@
+---
+import { site } from '../data/site';
+
+const links = [
+  { href: '/#work', label: 'Work' },
+  { href: '/about/', label: 'About' },
+  { href: site.resume, label: 'Résumé' },
+  { href: '/#contact', label: 'Contact' },
+];
+---
+
+<header class="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur">
+  <nav class="container-x flex h-16 items-center justify-between gap-6" aria-label="Main">
+    <a href="/" class="font-display shrink-0 text-base font-semibold tracking-tight whitespace-nowrap">{site.name}</a>
+    <ul class="flex items-center gap-3.5 text-[13px] text-ink/70 sm:gap-8 sm:text-sm">
+      {
+        links.map((l) => (
+          <li>
+            <a href={l.href} class:list={['hover:text-ink', Astro.url.pathname.startsWith(l.href) && l.href !== '/' && 'text-ink']}>
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>

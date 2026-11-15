@@ -1,0 +1,20 @@
+---
+// A row of key numbers for technical case studies.
+// MDX: <Stats items={[{ value: '6', label: 'Concurrent players' }, …]} />
+interface Props {
+  items: { value: string; label: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<dl class="breakout not-prose grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
+  {
+    items.map((s) => (
+      <div class="flex flex-col-reverse justify-end bg-bg p-5">
+        <dt class="mt-2 text-sm leading-5 text-muted">{s.label}</dt>
+        <dd class="font-display text-2xl text-ink tabular-nums sm:text-[1.75rem]">{s.value}</dd>
+      </div>
+    ))
+  }
+</dl>

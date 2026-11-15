@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #070809;
+  --color-surface: #101215;
+  --color-line: rgb(255 255 255 / 0.09);
+  --color-ink: #f2f0ec;
+  --color-muted: #8d9096;
+  --color-accent: #62e6d3;
+  /* Accent for the automotive specialization. */
+  --color-focus: #ff5a1f;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Only used for code samples in case studies. */
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply font-sans;
+    min-height: 100svh;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10;
+  }
+  /* Tight sans headlines. Wrap a word in <em> to set it in the accent color. */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+  }
+  .font-display em {
+    font-style: normal;
+    color: var(--color-accent);
+  }
+  /* Small uppercase labels for metadata, like a spec sheet. */
+  .hud {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-full border border-ink/25 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/60 hover:bg-surface;
+  }
+  .btn-solid {
+    @apply inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-bg transition-colors hover:bg-ink/85;
+  }
+
+  /* Case-study body copy (rendered MDX). */
+  .prose {
+    @apply max-w-2xl text-[17px] leading-8 text-ink/80;
+  }
+  .prose h2 {
+    @apply mt-16 mb-5 scroll-mt-24 text-2xl text-ink first:mt-0 sm:text-3xl;
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .prose h3 {
+    @apply mt-10 mb-3 text-lg font-semibold text-ink;
+  }
+  .prose p,
+  .prose ul,
+  .prose ol {
+    @apply my-5;
+  }
+  .prose ul {
+    @apply list-disc pl-5 marker:text-accent;
+  }
+  .prose ol {
+    @apply list-decimal pl-5 marker:text-accent;
+  }
+  .prose li {
+    @apply my-1.5;
+  }
+  .prose a {
+    @apply text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent;
+  }
+  .prose strong {
+    @apply font-semibold text-ink;
+  }
+  .prose code {
+    @apply bg-surface px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+  .prose pre {
+    @apply my-6 overflow-x-auto rounded-xl border border-line bg-surface p-4 font-mono text-sm leading-6;
+  }
+  .prose table {
+    @apply my-8 block w-full overflow-x-auto text-[15px] leading-6;
+  }
+  .prose th {
+    @apply border-b border-line px-3 py-2 text-left font-semibold text-ink first:pl-0;
+  }
+  .prose td {
+    @apply border-b border-line px-3 py-2.5 align-top first:pl-0 first:font-medium first:text-ink;
+  }
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+  .prose blockquote {
+    @apply my-10 border-l-2 border-accent pl-6 text-xl leading-9 text-ink;
+  }
+  .prose img,
+  .prose video {
+    @apply my-8 w-full border border-line;
+  }
+  /* Media components break out wider than the text column. */
+  .prose .breakout {
+    @apply my-12 lg:-mr-[40%];
+  }
+}
+

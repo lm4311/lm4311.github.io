@@ -1,0 +1,63 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/instrument-sans';
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = site.description } = Astro.props;
+const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.role}`;
+const canonical = new URL(Astro.url.pathname, site.url);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta name="theme-color" content="#070809" />
+    <meta name="generator" content={Astro.generator} />
+    <ClientRouter />
+  </head>
+  <body class="flex min-h-svh flex-col">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-bg"
+      >Skip to content</a
+    >
+    <Nav />
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      // Project loops play only while a card is hovered or focused.
+      document.addEventListener('astro:page-load', () => {
+        document.querySelectorAll<HTMLElement>('.project-card').forEach((card) => {
+          const video = card.querySelector<HTMLVideoElement>('video[data-hover-play]');
+          if (!video) return;
+          const play = () => video.play().catch(() => {});
+          const stop = () => video.pause();
+          card.addEventListener('pointerenter', play);
+          card.addEventListener('pointerleave', stop);
+          card.addEventListener('focusin', play);
+          card.addEventListener('focusout', stop);
+        });
+      });
+    </script>
+  </body>
+</html>

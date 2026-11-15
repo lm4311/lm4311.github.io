@@ -1,0 +1,153 @@
+---
+title: OptiTrack VR Multiplayer Plugin
+summary: A co-located multiplayer PCVR framework for Unreal Engine 5.8 that anchors each headset to OptiTrack while keeping the headset's own orientation and prediction, cutting fast-motion tracking error from centimeters to millimeters.
+year: 2026
+category: xr
+tags: [Unreal Engine 5.8, C++, OpenXR, Multiplayer VR, OptiTrack]
+purpose: Let several people share one physical room in VR (six stations by default), with every headset anchored to OptiTrack so players, avatars and the real space stay registered, without giving up the headset runtime's low-latency orientation and motion prediction.
+audience: Unreal Engine developers and venue operators building co-located, location-based VR and mixed reality experiences.
+role: Developer (tracking fusion, OpenXR integration, multiplayer framework and tools)
+platform: Unreal Engine 5.8 C++ plugin, version 0.3.0 beta (Win64 PCVR), OpenXR, OptiTrack Motive via Live Link. Tested on Meta Quest 3 over Link and Air Link.
+tools: [Unreal Engine 5.8, C++, Blueprints, OpenXR, OptiTrack Motive, Live Link, Enhanced Input, UMG, Niagara]
+links:
+  docs: /docs/optitrack-vr-multiplayer-technical-manual.pdf
+motif: tracking
+accent: '#62e6d3'
+featured: true
+order: 2
+---
+
+{/*
+  Demo videos: add each clip to public/media/ and set `src` (a still) or `video` (an MP4) on the matching <Frame> below.
+  For the main video at the top of the page, set `video:` (and optionally `poster:`) in the frontmatter above.
+  Add `team`, `duration` and `credits` to the frontmatter if you'd like them in the overview.
+*/}
+
+## The problem
+
+When several people share one physical room in VR, each headset's own inside-out tracking lives in its own coordinate space and drifts over time. Players stop lining up with each other, avatars float, and virtual objects slip away from the real room.
+
+OptiTrack gives precise, room-wide positions, but simply replacing the headset's pose with optical data throws away the runtime's orientation and short-horizon prediction. The result lags and judders, especially during fast head turns. This plugin fuses the two instead: **Motive anchors absolute position, and the OpenXR runtime keeps orientation and predicted motion.**
+
+<Frame caption="Demo video slot: two or more players sharing one room, with avatars aligned to their real positions" seed="optitrack-demo-coloc" motif="tracking" />
+
+## Your contribution
+
+{/* Adjust these to describe exactly what you built, if others worked on the project too. */}
+
+- **Tracking fusion:** combines OptiTrack position with the headset's OpenXR pose at matched capture times, with a filtered correction and graceful fallback states
+- **OpenXR integration:** a modified UE 5.8 OpenXR plugin that injects the fused position on both the game and render threads, while runtime orientation stays intact
+- **Calibration and alignment:** a guided eye-pivot and walking-yaw workflow, plus automatic alignment during normal use
+- **Multiplayer session framework:** a LAN dedicated server with physical host stations, readiness checks, replicated head and hand poses, and late-join handling
+- **Shared mixed reality:** host-controlled passthrough modes with per-actor content rules
+- **Stereo HUD:** UMG menus rendered into an OpenXR compositor layer for readable text, with hand-ray interaction
+- **Documentation:** a 12-page technical manual for developers and venue operators
+
+### System architecture
+
+Tracking is solved on each VR client. The dedicated server never receives Motive data; it owns the shared session state and relays participant data.
+
+<Pipeline
+  caption="On each VR client: from optical capture to the rendered frame."
+  steps={[
+    { title: 'Motive', detail: 'Streams headset rigid bodies with capture timestamps' },
+    { title: 'Live Link', detail: 'Modified OptiTrack source adds per-frame timing' },
+    { title: 'HMD override', detail: 'Pivot-to-eye, fusion and alignment' },
+    { title: 'OpenXR hook', detail: 'Fused position on game and render threads' },
+    { title: 'Scene and HUD', detail: 'Camera, controllers and compositor layers' },
+  ]}
+/>
+
+<Pipeline
+  caption="Across the session: one LAN dedicated server, with six stations in the default configuration."
+  steps={[
+    { title: 'Stations 1–6', detail: 'Each PC claims one headset rigid body (HMD1–HMD6)' },
+    { title: 'Readiness', detail: 'Pose, headset worn, fresh tracking and alignment' },
+    { title: 'Dedicated server', detail: 'Owns host identity, readiness and scene mode' },
+    { title: 'All clients', detail: 'Replicated heads, hands, avatars and shared mode' },
+  ]}
+/>
+
+## Key decisions
+
+### 1. Fuse instead of replace
+
+The plugin compares the two trackers at the same capture time, then adds a filtered correction to the runtime's predicted display-time position. The filter runs on the correction, not on the head motion, so the headset keeps its own low-latency prediction.
+
+```text
+C = inverse(T) * MotiveEye(t_capture) - Runtime(t_capture)
+Output(t_display) = RuntimePredicted(t_display) + Filtered(C)
+
+T = the VROrigin tracking-to-world transform
+```
+
+The tested Meta runtime doesn't return reliable poses for past times, so the plugin keeps its own history of runtime poses and interpolates it at each optical capture time.
+
+<Frame caption="Demo video slot: fast head turns with Legacy tracking vs Fusion, side by side" seed="optitrack-demo-fusion" motif="tracking" />
+
+### 2. Degrade gracefully when a tracker drops out
+
+Markers get occluded and headsets get taken off. Instead of snapping, the plugin moves through explicit states:
+
+| State | Behavior |
+| --- | --- |
+| Fusion | Normal operation: runtime prediction plus the filtered optical correction |
+| Hold | Optical gap over 0.15 s: keep the last correction while runtime tracking carries motion |
+| OpticalOnly | Runtime position untracked: predict from fresh optical data, up to 0.15 s ahead |
+| Coast | Both sources unavailable: hold the last output for up to 0.5 s, then hand back to the runtime |
+| Init | After put-on or reacquisition: prefer fresh optical data, then the last correction |
+| NoOptical / Doffed | No usable optical data, or headset removed: use runtime tracking |
+
+Small corrections are absorbed smoothly: the play space re-anchors in XY at up to 6 cm/s, and yaw is servoed at up to 0.2°/s while the player stands still.
+
+### 3. Calibration an operator can run on site
+
+Accurate co-location depends on knowing where the eyes are relative to the markers. A guided two-stage workflow solves it:
+
+1. **Eye pivot:** the player nods and turns their head through a guided sequence; the solve estimates the pivot-to-eye offset and rejects results with residuals above 2 cm.
+2. **Walking yaw:** the player walks about 4 m with a level head; the solve separates world yaw from the marker mount's fixed yaw offset, which a stationary comparison can't do.
+
+Results are saved per headset on each PC. A clear green "aligned" status uses hysteresis: it turns on at 1° of yaw error or less, and turns off only if the error stays above 2° for 2 seconds.
+
+<Frame caption="Demo video slot: the guided calibration flow from the player's view" seed="optitrack-demo-calibration" motif="tracking" />
+
+### 4. A session model built for a physical venue
+
+- **The host is a physical station**, not whoever connects first, and host status follows that station across reconnects.
+- **A player is ready only when four checks pass:** valid OpenXR pose, headset on head, fresh OptiTrack tracking and an aligned verdict. Status is sampled at 4 Hz and sent reliably only when something changes.
+- **Head and hand poses** go to the server through unreliable RPCs at a set rate, and remote copies interpolate toward them.
+- **Shared scene changes** are requested by the host, re-validated on the server, and replicated as a single state with a change serial, so late joiners apply the current mode immediately.
+
+<Frame caption="Demo video slot: the host switching everyone between Virtual, Mixed and Passthrough modes" seed="optitrack-demo-passthrough" motif="tracking" />
+
+## Results and learning
+
+Development measurements from one venue (Meta Quest 3 over Air Link, Motive at 120 Hz, UE 5.8, DX12), comparing Fusion with the previous Legacy approach:
+
+<Stats
+  items={[
+    { value: '0.15–0.62 cm', label: 'RMS error, fast yaw (Legacy: 3–8 cm)' },
+    { value: '0.10–0.35 cm', label: 'RMS error, walking (Legacy: 5–7 cm)' },
+    { value: '−8 to +5 ms', label: 'Positional lag, fast yaw (Legacy: −65 to −78 ms)' },
+    { value: '0', label: 'Snaps recorded while walking' },
+  ]}
+/>
+
+| Condition | Legacy RMS | Fusion RMS |
+| --- | --- | --- |
+| Fast yaw, 150–239°/s mean, peaks to 479°/s | 3–8 cm | 0.15–0.62 cm |
+| Walking, about 1 m/s | 5–7 cm | 0.10–0.35 cm, 0 snaps |
+| Rest | 0.10–0.18 cm | 0.03–0.12 cm |
+
+RMS compares logged display-time poses with the optical eye position at the matching capture time. These are development results, not a guaranteed accuracy or motion-to-photon latency.
+
+**What I learned**
+
+- Calibration matters as much as the algorithm: a later fast-yaw run with a zero pivot-to-eye offset showed about 1.3 cm RMS and around −40 ms apparent lag.
+- Wireless transport is its own problem. Fusion can't fix Link packet loss, and venue logs showed much lower loss over USB.
+- Air Link's HEVC codec produced offset passthrough edges in testing, so the documented path uses H.264.
+- Environment-depth occlusion was removed after severe Air Link degradation. Knowing what to cut was part of shipping.
+
+**Next steps:** a controlled physical registration test to confirm millimeter-level accuracy, wider recenter and re-localization coverage, and validation at the full participant count.
+
+For setup, the full API and validation procedures, read the [technical manual](/docs/optitrack-vr-multiplayer-technical-manual.pdf) (PDF, 12 pages).

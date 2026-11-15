@@ -1,0 +1,40 @@
+---
+// Project card: strong image, title, one sentence and a few tags.
+import type { CollectionEntry } from 'astro:content';
+import Cover from './Cover.astro';
+import { groupLabel } from '../data/site';
+
+interface Props {
+  project: CollectionEntry<'work'>;
+}
+
+const { project } = Astro.props;
+const { title, summary, category, tags, accent, motif, video, poster, placeholder } = project.data;
+---
+
+<article class="project-card group">
+  <a href={`/work/${project.id}/`} class="block">
+    <Cover
+      seed={title}
+      accent={accent}
+      motif={motif}
+      video={video}
+      poster={poster}
+      alt=""
+      class="aspect-video rounded-2xl border border-line transition-transform duration-500 group-hover:scale-[1.01]"
+    />
+    <p class="mt-5 text-sm text-muted">
+      {groupLabel[category]}
+      {placeholder && <span class="ml-1.5 rounded-full border border-line px-2 py-0.5 text-xs">Sample</span>}
+    </p>
+    <h3 class="font-display mt-1.5 text-2xl sm:text-[1.75rem]">
+      <span class="bg-[length:0_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 [background-image:linear-gradient(currentColor,currentColor)] group-hover:bg-[length:100%_1px]">
+        {title}
+      </span>
+    </h3>
+    <p class="mt-2 max-w-xl text-[15px] leading-6 text-ink/75">{summary}</p>
+    <ul class="mt-4 flex flex-wrap gap-1.5" aria-label="Tags">
+      {tags.map((t) => <li class="rounded-full bg-surface px-2.5 py-1 text-xs text-ink/75">{t}</li>)}
+    </ul>
+  </a>
+</article>

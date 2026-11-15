@@ -1,0 +1,64 @@
+---
+// Before/after slider: clay vs final, raw mocap vs final, previs vs final.
+// MDX: <Compare beforeSrc="/media/clay.jpg" afterSrc="/media/final.jpg" before="Clay" after="Final" />
+import Cover from './Cover.astro';
+import type { Motif } from '../lib/cover';
+
+interface Props {
+  beforeSrc?: string;
+  afterSrc?: string;
+  before?: string;
+  after?: string;
+  caption?: string;
+  aspect?: string;
+  seed?: string;
+  motif?: Motif;
+}
+
+const {
+  beforeSrc,
+  afterSrc,
+  before = 'Before',
+  after = 'After',
+  caption,
+  aspect = '16/9',
+  seed = 'compare',
+  motif,
+} = Astro.props;
+---
+
+<figure class="breakout not-prose" data-compare>
+  <div class="relative overflow-hidden rounded-2xl border border-line select-none" style={`aspect-ratio: ${aspect}; --pos: 50%`}>
+    <Cover seed={seed} accent="var(--color-accent)" motif={motif} poster={beforeSrc} alt={before} clay={!beforeSrc} class="absolute inset-0" />
+    <div class="absolute inset-0" style="clip-path: inset(0 0 0 var(--pos))">
+      <Cover seed={seed} accent="var(--color-accent)" motif={motif} poster={afterSrc} alt={after} class="absolute inset-0" />
+    </div>
+    <div class="pointer-events-none absolute inset-y-0 w-px bg-ink" style="left: var(--pos)">
+      <span class="absolute top-1/2 left-1/2 grid size-10 -translate-1/2 place-items-center rounded-full border border-ink/60 bg-bg/70 font-mono text-xs backdrop-blur">
+        ⟷
+      </span>
+    </div>
+    <span class="hud absolute top-3 left-3 bg-bg/70 px-2 py-1 text-ink">{before}</span>
+    <span class="hud absolute top-3 right-3 bg-bg/70 px-2 py-1 text-ink">{after}</span>
+    <input
+      type="range"
+      min="0"
+      max="100"
+      value="50"
+      aria-label={`Compare ${before} and ${after}`}
+      class="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
+    />
+  </div>
+  {caption && <figcaption class="hud mt-3">{caption}</figcaption>}
+</figure>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLElement>('[data-compare]').forEach((fig) => {
+      const input = fig.querySelector('input');
+      const frame = input?.parentElement;
+      if (!input || !frame) return;
+      input.addEventListener('input', () => frame.style.setProperty('--pos', `${input.value}%`));
+    });
+  });
+</script>

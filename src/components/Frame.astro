@@ -1,0 +1,34 @@
+---
+// A captioned render or clip for case studies. Without src/video it shows a generated placeholder.
+// MDX: <Frame src="/media/still.jpg" caption="Hero still" aspect="2.39/1" />
+import Cover from './Cover.astro';
+import type { Motif } from '../lib/cover';
+
+interface Props {
+  src?: string;
+  video?: string;
+  caption?: string;
+  alt?: string;
+  aspect?: string;
+  seed?: string;
+  motif?: Motif;
+}
+
+const { src, video, caption, alt = caption ?? '', aspect = '16/9', seed = caption ?? 'frame', motif } = Astro.props;
+---
+
+<figure class="breakout not-prose">
+  <div class="relative" style={`aspect-ratio: ${aspect}`}>
+    <Cover
+      seed={seed}
+      accent="var(--color-accent)"
+      motif={motif}
+      poster={src}
+      video={video}
+      alt={alt}
+      autoplay={!!video}
+      class="absolute inset-0 rounded-2xl border border-line"
+    />
+  </div>
+  {caption && <figcaption class="hud mt-3">{caption}</figcaption>}
+</figure>

@@ -1,0 +1,154 @@
+---
+// Project page: experience first, project overview, then the story
+// (contribution, key decisions, results) from the MDX file, then credits.
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Cover from '../../components/Cover.astro';
+import Frame from '../../components/Frame.astro';
+import Compare from '../../components/Compare.astro';
+import Pipeline from '../../components/Pipeline.astro';
+import Stats from '../../components/Stats.astro';
+import { getProjects } from '../../lib/work';
+import { groupLabel } from '../../data/site';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project, i) => ({
+    params: { id: project.id },
+    props: {
+      project,
+      prev: projects[(i - 1 + projects.length) % projects.length],
+      next: projects[(i + 1) % projects.length],
+    },
+  }));
+}
+
+const { project, prev, next } = Astro.props;
+const { Content } = await render(project);
+const d = project.data;
+
+const overview = [
+  { label: 'Purpose', value: d.purpose, wide: true },
+  { label: 'Audience', value: d.audience, wide: true },
+  { label: 'My role', value: d.role },
+  { label: 'Team', value: d.team },
+  { label: 'Timeframe', value: d.duration ? `${d.duration} · ${d.year}` : String(d.year) },
+  { label: 'Platform', value: d.platform },
+  { label: 'Client', value: d.client },
+].filter((m) => m.value);
+const links = [
+  { label: 'Read the technical manual', href: d.links?.docs },
+  { label: 'Watch full video', href: d.links?.video },
+  { label: 'Try the demo', href: d.links?.demo },
+  { label: 'Source code', href: d.links?.code },
+].filter((l): l is { label: string; href: string } => !!l.href);
+---
+
+<Base title={d.title} description={d.summary}>
+  <article style={`--color-accent: ${d.accent}`}>
+    <header class="container-x pt-10 sm:pt-14">
+      <a href="/#work" class="text-sm text-muted hover:text-ink">← All work</a>
+      {
+        d.placeholder && (
+          <p class="mt-6 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink/80">
+            Sample content. Replace the text and placeholder images with your own.
+          </p>
+        )
+      }
+      <p class="mt-8 text-sm text-muted">{groupLabel[d.category]} · {d.year}</p>
+      <h1 class="font-display mt-2 max-w-4xl text-4xl sm:text-6xl">{d.title}</h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-ink/80 sm:text-xl sm:leading-9">{d.summary}</p>
+      <ul class="mt-6 flex flex-wrap gap-1.5" aria-label="Tags">
+        {d.tags.map((t) => <li class="rounded-full bg-surface px-2.5 py-1 text-xs text-ink/80">{t}</li>)}
+      </ul>
+    </header>
+
+    <!-- Experience first -->
+    <div class="container-x mt-10">
+      <Cover
+        seed={d.title}
+        accent={d.accent}
+        motif={d.motif}
+        video={d.video}
+        poster={d.poster}
+        alt={d.title}
+        autoplay
+        controls
+        class="aspect-video rounded-2xl border border-line"
+      />
+      {
+        links.length > 0 && (
+          <div class="mt-5 flex flex-wrap gap-3">
+            {links.map((l) => (
+              <a href={l.href} class="btn" target="_blank" rel="noopener">
+                {l.label} <span aria-hidden="true">↗</span>
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
+
+    <!-- Project overview -->
+    <section class="container-x mt-16" aria-labelledby="overview">
+      <h2 id="overview" class="font-display text-2xl sm:text-3xl">Project overview</h2>
+      <dl class="mt-6 grid gap-x-10 gap-y-6 rounded-2xl border border-line p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4">
+        {
+          overview.map((m) => (
+            <div class:list={[m.wide && 'sm:col-span-2']}>
+              <dt class="text-sm text-muted">{m.label}</dt>
+              <dd class="mt-1 leading-7">{m.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <!-- Contribution, key decisions, results and learning -->
+    <div class="container-x py-12 sm:py-16">
+      <div class="prose">
+        <Content components={{ Frame, Compare, Pipeline, Stats }} />
+      </div>
+    </div>
+
+    <!-- Credits -->
+    {
+      (d.credits?.length || d.tools.length > 0) && (
+        <section class="container-x pb-16" aria-labelledby="credits">
+          <h2 id="credits" class="font-display text-2xl sm:text-3xl">Credits</h2>
+          <div class="mt-6 grid gap-10 border-t border-line pt-6 sm:grid-cols-2">
+            {d.credits && d.credits.length > 0 && (
+              <div>
+                <h3 class="text-sm font-semibold">Collaborators</h3>
+                <ul class="mt-3 space-y-1.5 text-ink/80">
+                  {d.credits.map((c) => (
+                    <li>
+                      {c.name} <span class="text-muted">· {c.role}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {d.tools.length > 0 && (
+              <div>
+                <h3 class="text-sm font-semibold">Tools</h3>
+                <p class="mt-3 text-ink/80">{d.tools.join(' · ')}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )
+    }
+  </article>
+
+  <nav class="container-x grid gap-4 border-t border-line py-12 sm:grid-cols-2" aria-label="More projects">
+    <a href={`/work/${prev.id}/`} class="group rounded-2xl border border-line p-6 hover:border-ink/40">
+      <span class="text-sm text-muted">← Previous</span>
+      <span class="font-display mt-2 block text-2xl group-hover:underline group-hover:underline-offset-4">{prev.data.title}</span>
+    </a>
+    <a href={`/work/${next.id}/`} class="group rounded-2xl border border-line p-6 text-right hover:border-ink/40">
+      <span class="text-sm text-muted">Next →</span>
+      <span class="font-display mt-2 block text-2xl group-hover:underline group-hover:underline-offset-4">{next.data.title}</span>
+    </a>
+  </nav>
+</Base>

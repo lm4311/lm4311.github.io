@@ -1,0 +1,14 @@
+---
+import { site } from '../data/site';
+---
+
+<footer class="border-t border-line">
+  <div class="container-x flex flex-col gap-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+    <p>© {new Date().getFullYear()} {site.name} · {site.location}</p>
+    <ul class="flex gap-6">
+      <li><a class="hover:text-ink" href={`mailto:${site.email}`}>Email</a></li>
+      <li><a class="hover:text-ink" href={site.links.linkedin}>LinkedIn</a></li>
+      <li><a class="hover:text-ink" href={site.resume}>Résumé</a></li>
+    </ul>
+  </div>
+</footer>
