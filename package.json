@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy": "astro build && gh-pages -d dist -t -m \"Deploy site\""
+    "deploy": "astro build && node scripts/deploy.cjs"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.5",
@@ -19,8 +19,5 @@
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.4.2",
     "tailwindcss": "^4.3.3"
-  },
-  "devDependencies": {
-    "gh-pages": "^6.3.0"
   }
 }
