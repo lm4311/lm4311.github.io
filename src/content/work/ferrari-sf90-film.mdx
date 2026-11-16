@@ -1,37 +1,90 @@
 ---
-title: Ferrari SF90 Film
-summary: A short cinematic film of the Ferrari SF90, built around light, motion and automotive storytelling.
-year: 2024
+title: Ferrari SF90 Stradale Film
+summary: A two-minute cinematic introducing the Ferrari SF90 Stradale, remade from Ferrari's official launch film in Unreal Engine 5.7 and rendered with the Path Tracer.
+year: 2026
 category: visualization
-tags: [Cinematography, Lighting, Automotive, Rendering]
-purpose: The idea behind the film and the story it tells.
-audience: Where it was shown or who it was made for.
-role: Director, lighting and rendering
-team: Solo, or collaborators
-duration: Timeframe
-platform: Unreal Engine 5
-tools: [Unreal Engine 5, Sequencer, Path Tracer, DaVinci Resolve]
+tags: [Cinematic, Automotive, Path Tracer, Unreal Engine 5]
+purpose: A remake of Ferrari's official SF90 Stradale launch film, created in Unreal Engine 5.7 and rendered with the Path Tracer.
+audience: Published on YouTube, on the Luke Mu Design channel.
+role: Director. 3D animation and modeling, VFX and studio lighting
+team: Three people
+platform: Unreal Engine 5.7
+credits:
+  - name: Zedong Lin
+    role: Environment lighting, motion capture
+  - name: Lecheng Zhao
+    role: Sound design, edit
+tools: [Unreal Engine 5.7, Path Tracer, GeForce RTX 5080]
 motif: car
 accent: '#ff3b30'
+poster: /media/ferrari-sf90/cover.webp
+youtube: PF7q_7geeIc
+links:
+  video: https://www.youtube.com/watch?v=PF7q_7geeIc
 featured: true
 order: 4
-placeholder: true
 ---
 
-{/* Cinematic page: lead with the film and stills, keep the text short. */}
+import { studio, dusk, tunnel, bridge, titles } from '../../data/ferrari-sf90';
 
-<Frame caption="Film still (replace)" seed="sf90-still-1" motif="car" aspect="2.39/1" />
+{/* Cinematic page: the film leads, then stills from it in running order.
+    The still lists come from src/data/ferrari-sf90.ts (made by scripts/ferrari-sf90-images.cjs). */}
 
-## Your contribution
+## The film
 
-Story, cameras, lighting, look development, rendering and edit: say what you did.
+*SF90 Stradale: The Beginning of a New Era. Reimagining performance, elegance, and innovation.*
 
-<Compare seed="sf90-light" motif="car" before="Clay" after="Final" caption="Drag to compare the clay pass and the final frame." />
+A remake of Ferrari's official SF90 Stradale launch film. It opens with a studio reveal that brings the car out of darkness, then follows a driver onto the road at dusk, through a tunnel and across a bridge in low sun. The picture is framed at 2.39:1.
 
-## Key decisions
+<Stats
+  items={[
+    { value: '1:58', label: 'Running time' },
+    { value: '4K · 24 fps', label: 'Master and YouTube release' },
+    { value: 'Path Tracer', label: 'Renderer, in Unreal Engine 5.7' },
+    { value: 'RTX 5080', label: 'Rendered on' },
+  ]}
+/>
 
-Two or three choices that shaped the film: the lighting mood, camera language, the edit and pacing.
+## Stills from the film
 
-## Results and learning
+Frames from the 4K master, in running order. Select an image to view it larger.
 
-Where it was shown, views or feedback, and what you'd push further.
+### Studio reveal
+
+The car appears one light at a time: the headlights first, then a rim light along the roofline and a red backlight, then close-ups of the headlight, intakes, shield, tail lights and brakes before the full profile. I lit this sequence.
+
+<Boards set="ferrari-sf90/studio" items={studio} columns={3} lead />
+
+### Dusk
+
+A driver in a red race suit arrives at dusk, helmet in hand. The camera stays close to the car: the mirror, the SF90 Stradale badge, the visor, the instrument cluster and the sky in the roof. Then the car is out on the highway. Environment lighting by Zedong Lin.
+
+<Boards set="ferrari-sf90/dusk" items={dusk} columns={3} lead />
+
+### Tunnel
+
+The car launches inside a tunnel with smoke off the rear tyres, followed by chase shots and close-ups of the wheel and the yellow brake caliper.
+
+<Boards set="ferrari-sf90/tunnel" items={tunnel} columns={3} lead />
+
+### Bridge
+
+The last sequence runs along a coastal highway and across a bridge in low sun, with tracking shots from the road and from the air.
+
+<Boards set="ferrari-sf90/bridge" items={bridge} columns={3} lead />
+
+### End titles
+
+The SF90 Stradale title and the Ferrari prancing horse close the film, followed by the credits.
+
+<Boards set="ferrari-sf90/titles" items={titles} columns={2} />
+
+## My contribution
+
+{/* Taken from the film's credits. Add detail on what each part involved. */}
+
+I directed the film and did the 3D animation and modeling, the VFX and the studio lighting. Zedong Lin did the environment lighting and the motion capture, and Lecheng Zhao did the sound design and the edit.
+
+## About the remake
+
+Inspired by and remade from Ferrari's official SF90 Stradale launch video. This is an unofficial remake, not affiliated with or endorsed by Ferrari.
