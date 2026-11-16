@@ -1,0 +1,36 @@
+---
+// Collapsed groups of images: a row per group that opens into a gallery.
+// Images in a closed group are not downloaded until it is opened.
+// MDX: <Folds set="private-jet" groups={passes} columns={3} unit="passes" />
+import Boards from './Boards.astro';
+
+interface Props {
+  /** Folder under src/assets/work/. Each group's `dir` is inside it. */
+  set: string;
+  groups: { dir: string; title: string; items: { file: string; title: string; note?: string }[] }[];
+  columns?: 2 | 3 | 6;
+  /** What the images are, for the count: "9 passes". */
+  unit?: string;
+}
+
+const { set, groups, columns = 3, unit = 'images' } = Astro.props;
+---
+
+<div class="not-prose my-10 w-[100cqw] border-b border-line">
+  {
+    groups.map((g) => (
+      <details class="group/fold border-t border-line">
+        <summary class="flex cursor-pointer list-none items-center gap-4 py-4 text-[15px] hover:text-ink [&::-webkit-details-marker]:hidden">
+          <span class="font-medium text-ink">{g.title}</span>
+          <span class="text-muted">
+            {g.items.length} {unit}
+          </span>
+          <span class="ml-auto text-muted transition-transform group-open/fold:rotate-45" aria-hidden="true">
+            +
+          </span>
+        </summary>
+        <Boards set={`${set}/${g.dir}`} items={g.items} columns={columns} class="w-full pt-2 pb-8" />
+      </details>
+    ))
+  }
+</div>

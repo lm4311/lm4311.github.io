@@ -1,0 +1,28 @@
+---
+// A YouTube video embedded in the page. Works for unlisted videos too.
+// `id` is the part after "v=" or "youtu.be/" in the video link.
+// MDX: <YouTube id="abc123XYZ_0" title="Cabin tour" caption="Lighting study and final render" />
+interface Props {
+  id: string;
+  title: string;
+  caption?: string;
+  class?: string;
+}
+
+const { id, title, caption, class: className = '' } = Astro.props;
+const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+---
+
+<figure class:list={['not-prose', className]}>
+  <div class="relative aspect-video overflow-hidden rounded-2xl border border-line bg-surface">
+    <iframe
+      src={src}
+      title={title}
+      class="absolute inset-0 h-full w-full"
+      loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen></iframe>
+  </div>
+  {caption && <figcaption class="hud mt-3">{caption}</figcaption>}
+</figure>

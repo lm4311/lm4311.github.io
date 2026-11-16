@@ -1,0 +1,150 @@
+---
+// A gallery of images from src/assets/work/<set>/: renders, study boards, passes, texture maps.
+// The page loads small responsive AVIF/WebP versions; a click opens a large one in a viewer.
+// MDX: <Boards set="private-jet" lead items={[{ file: 'material-00-overview', title: 'Overview' }]} />
+import { workImage, responsive, large, GRIDS, LEAD } from '../lib/images';
+
+interface Props {
+  /** Folder under src/assets/work/. */
+  set: string;
+  /** `file` is the image name without its extension. */
+  items: { file: string; title: string; note?: string }[];
+  /** Images per row on a wide screen. */
+  columns?: 2 | 3 | 6;
+  /** Show the first image across the full width. */
+  lead?: boolean;
+  class?: string;
+}
+
+const { set, items, columns = 2, lead = false, class: className = 'my-12 w-[100cqw]' } = Astro.props;
+const layout = GRIDS[columns];
+
+const boards = await Promise.all(
+  items.map(async (item, i) => {
+    const src = workImage(set, item.file);
+    const wide = lead && i === 0;
+    const [thumb, big, full] = await Promise.all([
+      responsive(src, wide ? LEAD.widths : [...layout.widths]),
+      large(src, 2560),
+      src.width > 2560 ? large(src, src.width, 86) : undefined,
+    ]);
+    return {
+      ...item,
+      wide,
+      thumb,
+      big,
+      full,
+      fullWidth: src.width,
+      ratio: `${src.width} / ${src.height}`,
+      sizes: wide ? LEAD.sizes : layout.sizes,
+    };
+  }),
+);
+---
+
+<div class:list={['not-prose grid gap-x-5', columns === 6 ? 'gap-y-5' : 'gap-y-8', layout.grid, className]} data-gallery>
+  {
+    boards.map((b, i) => (
+      <figure class:list={[b.wide && 'col-span-full']}>
+        <a
+          href={b.big}
+          target="_blank"
+          rel="noopener"
+          class="group block overflow-hidden rounded-xl border border-line bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          style={`aspect-ratio: ${b.ratio}`}
+          data-board
+          data-full={b.full}
+          data-full-width={b.full ? b.fullWidth : undefined}
+          data-title={b.title}
+          aria-label={`${b.title}: view larger`}
+        >
+          <picture class="block h-full w-full">
+            <source type="image/avif" srcset={b.thumb.avif} sizes={b.sizes} />
+            <source type="image/webp" srcset={b.thumb.webp} sizes={b.sizes} />
+            <img
+              src={b.thumb.fallback}
+              alt={b.note ? `${b.title}. ${b.note}` : b.title}
+              width={b.thumb.width}
+              height={b.thumb.height}
+              loading={i === 0 && b.wide ? 'eager' : 'lazy'}
+              decoding="async"
+              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+            />
+          </picture>
+        </a>
+        <figcaption class:list={[columns === 6 ? 'mt-2 text-xs leading-5' : 'mt-3 text-sm leading-6']}>
+          <span class="font-medium text-ink">{b.title}</span>
+          {b.note && <span class:list={['text-muted', columns === 6 && 'block']}>{columns === 6 ? b.note : ` · ${b.note}`}</span>}
+        </figcaption>
+      </figure>
+    ))
+  }
+</div>
+
+<script>
+  // Image viewer for the galleries. Without JavaScript the links simply open the large image.
+  let dialog: HTMLDialogElement | undefined;
+  let links: HTMLAnchorElement[] = [];
+  let index = 0;
+
+  function build() {
+    const d = document.createElement('dialog');
+    d.className =
+      'board-viewer m-0 h-dvh max-h-none w-screen max-w-none bg-black/95 p-0 text-ink backdrop:bg-black/80 open:flex open:flex-col';
+    d.innerHTML = `
+      <div class="flex items-center gap-3 px-4 py-3 text-sm sm:px-6">
+        <p class="min-w-0 flex-1 truncate"><span data-count class="text-muted"></span> <span data-title></span></p>
+        <a data-open target="_blank" rel="noopener" class="shrink-0 text-muted hover:text-ink">Full size ↗</a>
+        <button type="button" data-close autofocus class="shrink-0 rounded-full border border-line px-3 py-1 hover:border-ink/50">Close</button>
+      </div>
+      <div class="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4 sm:px-14">
+        <img data-image alt="" class="max-h-full max-w-full object-contain" />
+        <button type="button" data-prev aria-label="Previous image" class="absolute top-1/2 left-2 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-line bg-bg/70 hover:border-ink/50 sm:block">←</button>
+        <button type="button" data-next aria-label="Next image" class="absolute top-1/2 right-2 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-line bg-bg/70 hover:border-ink/50 sm:block">→</button>
+      </div>`;
+    d.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('[data-prev]')) show(index - 1);
+      else if (t.closest('[data-next]')) show(index + 1);
+      else if (t.closest('[data-close]') || !t.closest('img, a')) d.close();
+    });
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(index - 1);
+      if (e.key === 'ArrowRight') show(index + 1);
+    });
+    d.addEventListener('close', () => links[index]?.focus());
+    document.body.append(d);
+    return d;
+  }
+
+  function show(i: number) {
+    if (!dialog || links.length === 0) return;
+    index = (i + links.length) % links.length;
+    const link = links[index];
+    const img = dialog.querySelector<HTMLImageElement>('[data-image]')!;
+    img.removeAttribute('srcset');
+    img.removeAttribute('sizes');
+    img.src = link.href;
+    // Large screens get the full-resolution file where there is one.
+    if (link.dataset.full) {
+      img.sizes = '100vw';
+      img.srcset = `${link.href} 2560w, ${link.dataset.full} ${link.dataset.fullWidth}w`;
+    }
+    img.alt = link.dataset.title ?? '';
+    dialog.querySelector('[data-title]')!.textContent = link.dataset.title ?? '';
+    dialog.querySelector('[data-count]')!.textContent = `${index + 1} / ${links.length}`;
+    dialog.querySelector<HTMLAnchorElement>('[data-open]')!.href = link.dataset.full ?? link.href;
+    dialog.querySelectorAll<HTMLElement>('[data-prev], [data-next]').forEach((b) => b.classList.toggle('sm:block', links.length > 1));
+  }
+
+  document.addEventListener('click', (e) => {
+    const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-board]');
+    if (!link || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    if (!dialog?.isConnected) dialog = build();
+    // Previous / next stay inside the gallery that was clicked.
+    links = [...(link.closest('[data-gallery]') ?? document).querySelectorAll<HTMLAnchorElement>('a[data-board]')];
+    show(links.indexOf(link));
+    dialog.showModal();
+  });
+</script>

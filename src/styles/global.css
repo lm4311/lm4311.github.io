@@ -121,8 +121,9 @@
   .prose blockquote {
     @apply my-10 border-l-2 border-accent pl-6 text-xl leading-9 text-ink;
   }
-  .prose img,
-  .prose video {
+  /* Plain images in the text. Components marked not-prose style their own. */
+  .prose img:not(.not-prose *),
+  .prose video:not(.not-prose *) {
     @apply my-8 w-full border border-line;
   }
   /* Media components break out wider than the text column. */

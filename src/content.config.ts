@@ -30,6 +30,8 @@ const work = defineCollection({
     // Media. Paths under /public, e.g. '/media/bugatti.mp4' and '/media/bugatti.jpg'.
     video: z.string().optional(),
     poster: z.string().optional(),
+    // YouTube video ID (the part after "v=" in the link). Shown at the top of the project page instead of `video`.
+    youtube: z.string().optional(),
     // External links shown as buttons on the project page.
     links: z
       .object({

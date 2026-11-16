@@ -11,23 +11,84 @@ team: Team size, and who you worked with
 duration: Timeframe
 client: Company name (or "Company project" if under NDA)
 platform: Unreal Engine 5
-tools: [Unreal Engine 5, Path Tracer, Movie Render Queue]
+tools: [Unreal Engine 5.8, Lumen hardware ray tracing, Substrate, Movie Render Queue]
 motif: jet
 accent: '#d8c3a5'
+poster: /media/private-jet/cover.webp
 featured: true
 order: 3
 placeholder: true
 ---
 
-{/* Visual page: let the renders lead, keep the text short. */}
+import { stills, passes, textures } from '../../data/private-jet';
 
-<Frame caption="Exterior hero render (replace)" seed="jet-exterior" motif="jet" aspect="2.39/1" />
+{/* Visual page: let the renders lead, keep the text short.
+    The image lists come from src/data/private-jet.ts (made by scripts/private-jet-images.cjs). */}
+
+## Final renders
+
+Thirteen stills of the cabin, from the galley to the bedroom and lavatory, lit and rendered in real time with Lumen hardware ray tracing. Select an image to view it larger.
+
+<Boards set="private-jet/stills" items={stills} columns={3} lead />
 
 ## Your contribution
 
 Your part of the company project: lighting, materials, cabin layout, camera work, final renders.
 
-<Frame caption="Cabin interior (replace)" seed="jet-cabin" motif="jet" />
+## Lighting study
+
+Every still next to its lighting-only version, with the materials replaced by neutral clay. Drag across an image to compare.
+
+<Reveal set="private-jet" before="clay" after="stills" beforeLabel="Lighting only" afterLabel="Final render" items={stills} lead />
+
+## Material study
+
+Nine hero materials from the cabin, built as layered Substrate and OpenPBR shaders. Every board shows a close-up from the final render, the layer stack, the material instance chain, the key parameters and the texture maps behind it.
+
+<Boards
+  set="private-jet"
+  lead
+  items={[
+    { file: 'material-00-overview', title: 'Material overview', note: 'The nine hero materials' },
+    { file: 'material-01-galley-marble-countertop', title: 'Galley countertop', note: 'Honed black marble' },
+    { file: 'material-02-galley-oak-veneer-gloss', title: 'Galley backsplash', note: 'Tinted oak veneer, gloss lacquer' },
+    { file: 'material-03-galley-chrome-tap', title: 'Galley tap', note: 'Polished chrome' },
+    { file: 'material-04-clubseat-fabric', title: 'Club seat', note: 'Woven upholstery fabric' },
+    { file: 'material-05-ledge-burl-veneer', title: 'Side ledge inset', note: 'Burl wood veneer' },
+    { file: 'material-06-dining-table-mahogany', title: 'Dining table', note: 'Mahogany veneer, satin coat' },
+    { file: 'material-07-lavatory-black-marble', title: 'Lavatory vanity', note: 'Polished black marble' },
+    { file: 'material-08-seat-shell-and-stitching', title: 'Seat back shell and stitching' },
+    { file: 'material-09-cabin-carpet', title: 'Cabin carpet', note: 'Patterned loop pile' },
+  ]}
+/>
+
+### Texture maps
+
+The maps that drive each material, shown as previews. Dark detail masks have their levels raised so they read on screen.
+
+<Folds set="private-jet" groups={textures} columns={6} unit="maps" />
+
+## Visualization breakdown
+
+Six hero stills taken apart into their render passes: the final image next to lighting only, detail lighting, reflections only, unlit, roughness, specular, world normal and scene depth.
+
+<Boards
+  set="private-jet"
+  items={[
+    { file: 'breakdown-still03-lounge-hero', title: 'Main lounge' },
+    { file: 'breakdown-still01-galley-marble', title: 'Galley' },
+    { file: 'breakdown-still04-clubseat', title: 'Club seat' },
+    { file: 'breakdown-still06-dining-table', title: 'Dining table' },
+    { file: 'breakdown-still12-lav-vanity', title: 'Lavatory vanity' },
+    { file: 'breakdown-still13-leather-stitch', title: 'Seat stitching' },
+  ]}
+/>
+
+### Render passes
+
+The same passes as separate images at render resolution.
+
+<Folds set="private-jet" groups={passes} columns={3} unit="passes" />
 
 ## Key decisions
 
