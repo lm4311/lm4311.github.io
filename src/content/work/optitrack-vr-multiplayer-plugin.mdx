@@ -3,11 +3,11 @@ title: OptiTrack VR Multiplayer Plugin
 summary: A co-located multiplayer PCVR framework for Unreal Engine 5.8 that anchors each headset to OptiTrack while keeping the headset's own orientation and prediction, cutting fast-motion tracking error from centimeters to millimeters.
 year: 2026
 category: xr
-tags: [Unreal Engine 5.8, C++, OpenXR, Multiplayer VR, OptiTrack]
+tags: [Unreal Engine 5.8, C++, OpenXR, Hand Tracking, Multiplayer VR, OptiTrack]
 purpose: Let several people share one physical room in VR (six stations by default), with every headset anchored to OptiTrack so players, avatars and the real space stay registered, without giving up the headset runtime's low-latency orientation and motion prediction.
 audience: Unreal Engine developers and venue operators building co-located, location-based VR and mixed reality experiences.
 role: Developer (tracking fusion, OpenXR integration, multiplayer framework and tools)
-platform: Unreal Engine 5.8 C++ plugin, version 0.3.0 beta (Win64 PCVR), OpenXR, OptiTrack Motive via Live Link. Tested on Meta Quest 3 over Link and Air Link.
+platform: Unreal Engine 5.8 C++ plugin, version 0.4.0 beta (Win64 PCVR), OpenXR, OptiTrack Motive via Live Link. Tested on Meta Quest 3 over Link and Air Link.
 tools: [Unreal Engine 5.8, C++, Blueprints, OpenXR, OptiTrack Motive, Live Link, Enhanced Input, UMG, Niagara]
 links:
   docs: /docs/optitrack-vr-multiplayer-technical-manual.pdf
@@ -39,9 +39,10 @@ OptiTrack gives precise, room-wide positions, but simply replacing the headset's
 - **OpenXR integration:** a modified UE 5.8 OpenXR plugin that injects the fused position on both the game and render threads, while runtime orientation stays intact
 - **Calibration and alignment:** a guided eye-pivot and walking-yaw workflow, plus automatic alignment during normal use
 - **Multiplayer session framework:** a LAN dedicated server with physical host stations, readiness checks, replicated head and hand poses, and late-join handling
-- **Shared mixed reality:** host-controlled passthrough modes with per-actor content rules
-- **Stereo HUD:** UMG menus rendered into an OpenXR compositor layer for readable text, with hand-ray interaction
-- **Documentation:** a 12-page technical manual for developers and venue operators
+- **Hand tracking:** a second input mode next to the controllers, with palm-ray and pinch menu interaction, avatar fingers retargeted from the OpenXR hand joints, and hand poses replicated to the other players
+- **Per-player mixed reality:** each player switches their own view between Virtual and Passthrough, with per-actor content rules, a patterned reveal transition and occlusion by the player's real hands
+- **Stereo HUD:** UMG menus rendered into an OpenXR compositor layer for readable text, with a laser drawn as its own compositor layer for controllers and hands
+- **Documentation:** a 16-page technical manual for developers and venue operators
 
 ### System architecture
 
@@ -54,7 +55,7 @@ Tracking is solved on each VR client. The dedicated server never receives Motive
     { title: 'Live Link', detail: 'Modified OptiTrack source adds per-frame timing' },
     { title: 'HMD override', detail: 'Pivot-to-eye, fusion and alignment' },
     { title: 'OpenXR hook', detail: 'Fused position on game and render threads' },
-    { title: 'Scene and HUD', detail: 'Camera, controllers and compositor layers' },
+    { title: 'Scene and HUD', detail: 'Camera, controllers, hands and compositor layers' },
   ]}
 />
 
@@ -63,8 +64,8 @@ Tracking is solved on each VR client. The dedicated server never receives Motive
   steps={[
     { title: 'Stations 1–6', detail: 'Each PC claims one headset rigid body (HMD1–HMD6)' },
     { title: 'Readiness', detail: 'Pose, headset worn, fresh tracking and alignment' },
-    { title: 'Dedicated server', detail: 'Owns host identity, readiness and scene mode' },
-    { title: 'All clients', detail: 'Replicated heads, hands, avatars and shared mode' },
+    { title: 'Dedicated server', detail: 'Owns stations, host identity and readiness' },
+    { title: 'All clients', detail: 'Replicated heads, hands, avatars and input modes' },
   ]}
 />
 
@@ -115,10 +116,23 @@ Results are saved per headset on each PC. A clear green "aligned" status uses hy
 
 - **The host is a physical station**, not whoever connects first, and host status follows that station across reconnects.
 - **A player is ready only when four checks pass:** valid OpenXR pose, headset on head, fresh OptiTrack tracking and an aligned verdict. Status is sampled at 4 Hz and sent reliably only when something changes.
-- **Head and hand poses** go to the server through unreliable RPCs at a set rate, and remote copies interpolate toward them.
-- **Shared scene changes** are requested by the host, re-validated on the server, and replicated as a single state with a change serial, so late joiners apply the current mode immediately.
+- **Head, controller and hand poses** go to the server through unreliable RPCs at 15 Hz, and remote copies interpolate toward them.
+- **The view mode is each player's own.** Switching between Virtual and Passthrough is local to that player: nothing about it is replicated, and nobody, the host included, can change another player's view.
+- **The server probe says why a server is offline:** no reply, port closed, incompatible build, or a reply from another network adapter. The server reports its listening port and whether Windows Firewall lets other PCs reach it.
 
-<Frame caption="Demo video slot: the host switching everyone between Virtual, Mixed and Passthrough modes" seed="optitrack-demo-passthrough" motif="tracking" />
+<Frame caption="Demo video slot: a player switching their own view between Virtual and Passthrough" seed="optitrack-demo-passthrough" motif="tracking" />
+
+### 5. Hand tracking as a mode the wearer chooses
+
+Players can put the controllers down and use their hands. Hand tracking is an explicit input mode, switched in the menu and never auto-detected.
+
+- **One pose for everything.** Each tracked hand is reduced to a canonical pose: the wrist plus 19 joint rotations. That pose drives the avatar's fingers through a retarget profile and is also what gets replicated, so local and remote copies run the same path, and another skeleton needs only its own profile.
+- **Hands stay registered with the head.** Hand joints arrive in the headset's raw tracking space, so the plugin applies the same OptiTrack correction to them that it applies to the head and controllers.
+- **Gestures are ordinary input keys.** A palm ray points at the menu, a pinch selects and a double pinch opens it. Project code maps the pinch keys like controller buttons.
+- **Each hand fails on its own.** A hand that leaves the cameras' view relaxes only its own arm, and recovers when it returns.
+- **Replication is small:** 189 bytes per update with both hands tracked, sent at 15 Hz only while the hands move.
+
+<Frame caption="Demo video slot: menu interaction and avatar fingers with tracked hands" seed="optitrack-demo-hands" motif="tracking" />
 
 ## Results and learning
 
@@ -147,7 +161,8 @@ RMS compares logged display-time poses with the optical eye position at the matc
 - Wireless transport is its own problem. Fusion can't fix Link packet loss, and venue logs showed much lower loss over USB.
 - Air Link's HEVC codec produced offset passthrough edges in testing, so the documented path uses H.264.
 - Environment-depth occlusion was removed after severe Air Link degradation. Knowing what to cut was part of shipping.
+- Measuring network traffic paid off: moving one RPC off Event Tick and onto the pose timer helped cut Blueprint RPC traffic per client from 2,859 to 910 B/s in a desktop test.
 
-**Next steps:** a controlled physical registration test to confirm millimeter-level accuracy, wider recenter and re-localization coverage, and validation at the full participant count.
+**Next steps:** a controlled physical registration test to confirm millimeter-level accuracy, wider recenter and re-localization coverage, headset verification of the reveal transition, and validation at the full participant count.
 
-For setup, the full API and validation procedures, read the [technical manual](/docs/optitrack-vr-multiplayer-technical-manual.pdf) (PDF, 12 pages).
+For setup, the full API and validation procedures, read the [technical manual](/docs/optitrack-vr-multiplayer-technical-manual.pdf) (PDF, 16 pages).
