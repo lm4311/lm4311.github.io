@@ -1,0 +1,70 @@
+---
+title: Last Sonata
+summary: A visceral first-person shooter in Unreal Engine 5, focused on zombie survival mechanics and atmospheric storytelling.
+year: 2025
+category: xr
+tags: [FPS, Zombie survival, Game design, Unreal Engine 5]
+purpose: A zombie survival FPS inspired by modern AAA apocalyptic titles, where the entire experience unfolds within one vast, interconnected map.
+role: Solo developer (design, programming, UI/UX)
+duration: September 2024 to present
+platform: Unreal Engine 5
+tools: [Unreal Engine 5, Blueprints, Niagara, Adobe Creative Cloud]
+motif: skeleton
+accent: '#f0884a'
+video: /media/last-sonata/combat.mp4
+poster: /media/last-sonata/cover.webp
+youtube: E8vpLoMMr3w
+order: 7
+---
+
+{/* Migrated from the old portfolio site (Game1.html). Stills: src/assets/work/last-sonata/; clips and the card
+    poster: public/media/last-sonata/; the PDF: public/docs/. All made by scripts/last-sonata-media.cjs.
+    The gameplay demo at the top is the YouTube video the old page embedded. */}
+
+## The concept
+
+### Humanity's revival begins here
+
+In **Last Sonata**, a zombie survival FPS inspired by modern AAA apocalyptic titles, the entire experience unfolds within one vast, interconnected map. You play as Sam, a retired military officer, partnered remotely with Iris, a commander providing overwatch from above.
+
+Guided by the final hint left by a mad scientist, Sam and Iris must locate the Five Elemental Keys hidden throughout a residential village. It is a test of coordination, survival instincts and firepower.
+
+<Boards
+  set="last-sonata"
+  items={[
+    { file: 'boss', title: 'A boss waiting at the edge of the abandoned city' },
+    { file: 'piano-room', title: 'A candlelit piano in an abandoned house' },
+  ]}
+/>
+
+## My contribution
+
+### Solo development
+
+As the solo creator, I serve as both programmer and designer. I built the shooting mechanics, enemy behaviors, traversal systems and the user interface entirely in Unreal Engine 5.
+
+My focus was on game feel: tuning weapon recoil, scripting multi-phase boss battles, and optimizing performance (LODs, object pooling) to keep the action fluid.
+
+<Frame
+  video="/media/last-sonata/combat.mp4"
+  src="/media/last-sonata/combat.jpg"
+  caption="Gameplay: rifle combat through the burning outskirts of the city"
+/>
+
+## Key outcomes
+
+- **Immersive combat:** system-driven combat with clear attack cues and cinematic transitions.
+- **Advanced AI:** horde AI using NavMesh and NavLinks for complex pathfinding and crowd queuing.
+- **Polish:** dynamic crosshairs, motion-warped traversal and polished UI feedback.
+
+<Frame
+  video="/media/last-sonata/horde.mp4"
+  src="/media/last-sonata/horde.jpg"
+  caption="Gameplay: the horde climbing the perimeter fence to reach the player"
+/>
+
+## Design and systems analysis
+
+The weapon, input, crosshair, AI, pooling, boss and level-design systems are broken down one by one in the full write-up.
+
+[Read the game design and systems analysis (PDF) ↗](/docs/last-sonata-design-and-analysis.pdf)
