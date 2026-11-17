@@ -47,6 +47,9 @@ const work = defineCollection({
       })
       .optional(),
 
+    // An award, shown as a laurel beside the title: { top: 'Award winner', main: 'Games for Change', year: '2026' }.
+    award: z.object({ top: z.string(), main: z.string(), year: z.string() }).optional(),
+
     accent: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)

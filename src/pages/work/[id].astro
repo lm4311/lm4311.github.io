@@ -15,6 +15,7 @@ import Folds from '../../components/Folds.astro';
 import Compare from '../../components/Compare.astro';
 import Pipeline from '../../components/Pipeline.astro';
 import Stats from '../../components/Stats.astro';
+import Laurel from '../../components/Laurel.astro';
 import { getProjects } from '../../lib/work';
 import { groupLabel } from '../../data/site';
 
@@ -62,12 +63,18 @@ const links = [
           </p>
         )
       }
-      <p class="mt-8 text-sm text-muted">{groupLabel[d.category]} · {d.year}</p>
-      <h1 class="font-display mt-2 max-w-4xl text-4xl sm:text-6xl">{d.title}</h1>
-      <p class="mt-5 max-w-3xl text-lg leading-8 text-ink/80 sm:text-xl sm:leading-9">{d.summary}</p>
-      <ul class="mt-6 flex flex-wrap gap-1.5" aria-label="Tags">
-        {d.tags.map((t) => <li class="rounded-full bg-surface px-2.5 py-1 text-xs text-ink/80">{t}</li>)}
-      </ul>
+      <!-- With an award, its laurel sits to the right of the title block (below it on a phone). -->
+      <div class="md:flex md:items-end md:justify-between md:gap-10">
+        <div class="min-w-0">
+          <p class="mt-8 text-sm text-muted">{groupLabel[d.category]} · {d.year}</p>
+          <h1 class="font-display mt-2 max-w-4xl text-4xl sm:text-6xl">{d.title}</h1>
+          <p class="mt-5 max-w-3xl text-lg leading-8 text-ink/80 sm:text-xl sm:leading-9">{d.summary}</p>
+          <ul class="mt-6 flex flex-wrap gap-1.5" aria-label="Tags">
+            {d.tags.map((t) => <li class="rounded-full bg-surface px-2.5 py-1 text-xs text-ink/80">{t}</li>)}
+          </ul>
+        </div>
+        {d.award && <Laurel {...d.award} class="mt-8 w-40 shrink-0 text-ink/90 md:mt-0 md:w-52" />}
+      </div>
     </header>
 
     <!-- Experience first -->

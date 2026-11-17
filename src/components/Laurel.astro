@@ -1,0 +1,62 @@
+---
+// A film-festival style award laurel, drawn as inline SVG so the text uses the site's own font and colour.
+// <Laurel top="Award winner" main="Games for Change" year="2026" class="w-48" />
+// The same wreath is on the iWasThere trailer's end card.
+interface Props {
+  /** Small line above, e.g. "Award winner". */
+  top: string;
+  /** The awarding body or the award, e.g. "Games for Change". */
+  main: string;
+  year: string;
+  class?: string;
+}
+
+const { top, main, year, class: className = '' } = Astro.props;
+
+const cx = 900, cy = 660, R = 590;
+const rad = (d: number) => (d * Math.PI) / 180;
+const n = (v: number) => v.toFixed(1);
+
+// One branch (the left one): pairs of leaves along an arc from the bottom up to the top, getting smaller.
+const from = 103, to = 248, pairs = 15;
+const stem: string[] = [];
+for (let a = from - 6; a <= to; a += 2) stem.push(`${n(cx + R * Math.cos(rad(a)))},${n(cy + R * Math.sin(rad(a)))}`);
+const leaf = (x: number, y: number, rot: number, len: number, wid: number) => ({
+  transform: `translate(${n(x)},${n(y)}) rotate(${n(rot)})`,
+  d: `M0,0 C${n(len * 0.3)},${n(-wid)} ${n(len * 0.72)},${n(-wid * 0.9)} ${n(len)},0 C${n(len * 0.72)},${n(wid * 0.9)} ${n(len * 0.3)},${n(wid)} 0,0Z`,
+});
+const leaves = [];
+for (let i = 0; i < pairs; i++) {
+  const t = i / (pairs - 1);
+  const a = from + (to - from) * t;
+  const x = cx + R * Math.cos(rad(a)), y = cy + R * Math.sin(rad(a));
+  const len = 150 - 62 * t, wid = 31 - 12 * t;
+  leaves.push(leaf(x, y, a + 90 + 34, len, wid)); // outer leaf, leaning away from the centre
+  leaves.push(leaf(x, y, a + 90 - 30, len * 0.9, wid * 0.92)); // inner leaf
+}
+leaves.push(leaf(cx + R * Math.cos(rad(to + 3)), cy + R * Math.sin(rad(to + 3)), to + 94, 86, 18));
+---
+
+<svg
+  viewBox="150 20 1500 1260"
+  role="img"
+  aria-label={`${top}, ${main} ${year}`}
+  fill="currentColor"
+  class:list={['block h-auto', className]}
+>
+  {
+    [undefined, 'translate(1800,0) scale(-1,1)'].map((mirror) => (
+      <g transform={mirror}>
+        <polyline points={stem.join(' ')} fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+        {leaves.map((l) => <path transform={l.transform} d={l.d} />)}
+      </g>
+    ))
+  }
+  <g text-anchor="middle" style="text-transform: uppercase">
+    <text x={cx} y={cy - 122} font-size="62" letter-spacing="14">{top}</text>
+    <rect x={cx - 150} y={cy - 84} width="300" height="4"></rect>
+    <text x={cx} y={cy + 28} font-size="82" font-weight="700" letter-spacing="4">{main}</text>
+    <rect x={cx - 150} y={cy + 74} width="300" height="4"></rect>
+    <text x={cx} y={cy + 170} font-size="70" letter-spacing="16">{year}</text>
+  </g>
+</svg>
