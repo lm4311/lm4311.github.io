@@ -1,9 +1,11 @@
 // Makes the web media for the iWasThere page from the user's full run-through recording and the team's level map.
 //
 //   node scripts/iwasthere-media.cjs            (everything)
-//   ONLY=chase,coral node scripts/iwasthere-media.cjs   (just these clips; "full" = the run-through, "stills")
+//   ONLY=chase,coral node scripts/iwasthere-media.cjs   (just these clips, or "stills")
+//   ONLY=full node scripts/iwasthere-media.cjs          (the whole run-through; not on the site any more, see below)
 //
-// Run-through: the whole 11:48 recording with sound, 1280 px H.264 + AAC with faststart, two-pass to stay well under
+// Run-through: only when asked for with ONLY=full (the page shows the YouTube trailer instead, and the 92 MB file was
+//              removed from the site). The whole 11:48 recording with sound, 1280 px H.264 + AAC with faststart, two-pass to stay well under
 //              GitHub's 100 MB file limit: public/media/iwasthere/playthrough.mp4 (+ playthrough.jpg poster).
 // Clips:       silent 1280 px H.264 loops, one per gameplay beat in play order, each with a JPG poster.
 //              chase.mp4 is also the homepage card loop.
@@ -93,7 +95,7 @@ async function poster(at, out, width) {
     console.log(`${name}.mp4: ${kb(fs.statSync(out).size)}, poster ${kb(fs.statSync(jpg).size)}`);
   }
 
-  if (want('full')) {
+  if (ONLY && ONLY.includes('full')) {
     // ~1.0 Mb/s video + 96 kb/s audio over 708 s: about 95 MB.
     const out = path.join(mediaDir, 'playthrough.mp4');
     const log = path.join(os.tmpdir(), `iwasthere-2pass-${process.pid}`);
