@@ -57,6 +57,29 @@ const canonical = new URL(Astro.url.pathname, site.url);
           card.addEventListener('focusin', play);
           card.addEventListener('focusout', stop);
         });
+
+        // Case-study clips load and play only while they are on screen.
+        const clips = document.querySelectorAll<HTMLVideoElement>('video[data-inview-play]');
+        if (!clips.length) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          // No motion unless asked for: leave the poster up and offer the player controls.
+          clips.forEach((clip) => {
+            clip.controls = true;
+            clip.removeAttribute('aria-hidden');
+          });
+          return;
+        }
+        const onScreen = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              const clip = entry.target as HTMLVideoElement;
+              if (entry.isIntersecting) clip.play().catch(() => {});
+              else clip.pause();
+            }
+          },
+          { rootMargin: '200px 0px' },
+        );
+        clips.forEach((clip) => onScreen.observe(clip));
       });
     </script>
   </body>

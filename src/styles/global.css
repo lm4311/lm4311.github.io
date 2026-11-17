@@ -130,5 +130,9 @@
   .prose .breakout {
     @apply my-12 lg:-mr-[40%];
   }
+  /* Frames inside a FrameRow: the row breaks out, its frames don't. */
+  .prose .breakout .breakout {
+    @apply my-0 lg:mr-0;
+  }
 }
 

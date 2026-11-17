@@ -18,7 +18,8 @@ order: 2
 ---
 
 {/*
-  Demo videos: add each clip to public/media/ and set `src` (a still) or `video` (an MP4) on the matching <Frame> below.
+  Demo clips live in public/media/optitrack/ (720p, silent). Each <Frame> takes `video` (the MP4) and `src` (its poster still);
+  clips loop muted and play only while they are on screen.
   For the main video at the top of the page, set `video:` (and optionally `poster:`) in the frontmatter above.
   Add `team`, `duration` and `credits` to the frontmatter if you'd like them in the overview.
 */}
@@ -29,7 +30,24 @@ When several people share one physical room in VR, each headset's own inside-out
 
 OptiTrack gives precise, room-wide positions, but simply replacing the headset's pose with optical data throws away the runtime's orientation and short-horizon prediction. The result lags and judders, especially during fast head turns. This plugin fuses the two instead: **Motive anchors absolute position, and the OpenXR runtime keeps orientation and predicted motion.**
 
-<Frame caption="Demo video slot: two or more players sharing one room, with avatars aligned to their real positions" seed="optitrack-demo-coloc" motif="tracking" />
+<Frame
+  video="/media/optitrack/coloc-touch.mp4"
+  src="/media/optitrack/coloc-touch.jpg"
+  caption="Two players sharing one room, seen from one headset: a fist bump, a high five and a pat on the head"
+/>
+
+<FrameRow>
+  <Frame
+    video="/media/optitrack/coloc-walk.mp4"
+    src="/media/optitrack/coloc-walk.jpg"
+    caption="The other player walking the room"
+  />
+  <Frame
+    video="/media/optitrack/coloc-hands.mp4"
+    src="/media/optitrack/coloc-hands.jpg"
+    caption="Both players' tracked fingers, face to face"
+  />
+</FrameRow>
 
 ## Your contribution
 
@@ -84,8 +102,6 @@ T = the VROrigin tracking-to-world transform
 
 The tested Meta runtime doesn't return reliable poses for past times, so the plugin keeps its own history of runtime poses and interpolates it at each optical capture time.
 
-<Frame caption="Demo video slot: fast head turns with Legacy tracking vs Fusion, side by side" seed="optitrack-demo-fusion" motif="tracking" />
-
 ### 2. Degrade gracefully when a tracker drops out
 
 Markers get occluded and headsets get taken off. Instead of snapping, the plugin moves through explicit states:
@@ -110,7 +126,11 @@ Accurate co-location depends on knowing where the eyes are relative to the marke
 
 Results are saved per headset on each PC. A clear green "aligned" status uses hysteresis: it turns on at 1° of yaw error or less, and turns off only if the error stays above 2° for 2 seconds.
 
-<Frame caption="Demo video slot: the guided calibration flow from the player's view" seed="optitrack-demo-calibration" motif="tracking" />
+<Frame
+  video="/media/optitrack/calibration.mp4"
+  src="/media/optitrack/calibration.jpg"
+  caption="The guided calibration flow from the player's view: the nod-and-turn step, the walk, then the calibrated result"
+/>
 
 ### 4. A session model built for a physical venue
 
@@ -120,7 +140,11 @@ Results are saved per headset on each PC. A clear green "aligned" status uses hy
 - **The view mode is each player's own.** Switching between Virtual and Passthrough is local to that player: nothing about it is replicated, and nobody, the host included, can change another player's view.
 - **The server probe says why a server is offline:** no reply, port closed, incompatible build, or a reply from another network adapter. The server reports its listening port and whether Windows Firewall lets other PCs reach it.
 
-<Frame caption="Demo video slot: a player switching their own view between Virtual and Passthrough" seed="optitrack-demo-passthrough" motif="tracking" />
+<Frame
+  video="/media/optitrack/passthrough.mp4"
+  src="/media/optitrack/passthrough.jpg"
+  caption="A player switching their own view from Virtual to Passthrough and back, with their real hands in view"
+/>
 
 ### 5. Hand tracking as a mode the wearer chooses
 
@@ -132,7 +156,17 @@ Players can put the controllers down and use their hands. Hand tracking is an ex
 - **Each hand fails on its own.** A hand that leaves the cameras' view relaxes only its own arm, and recovers when it returns.
 - **Replication is small:** 189 bytes per update with both hands tracked, sent at 15 Hz only while the hands move.
 
-<Frame caption="Demo video slot: menu interaction and avatar fingers with tracked hands" seed="optitrack-demo-hands" motif="tracking" />
+<Frame
+  video="/media/optitrack/hands-gestures.mp4"
+  src="/media/optitrack/hands-gestures.jpg"
+  caption="Avatar fingers driven by the player's tracked hands"
+/>
+
+<Frame
+  video="/media/optitrack/hands-menu.mp4"
+  src="/media/optitrack/hands-menu.jpg"
+  caption="Opening the menu with tracked hands, then moving through Tracking Status, Session and Settings"
+/>
 
 ## Results and learning
 

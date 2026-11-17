@@ -1,6 +1,8 @@
 ---
 // A captioned render or clip for case studies. Without src/video it shows a generated placeholder.
 // MDX: <Frame src="/media/still.jpg" caption="Hero still" aspect="2.39/1" />
+// A clip loops silently and plays only while it is on screen; `src` is then its poster still:
+// MDX: <Frame video="/media/clip.mp4" src="/media/clip.jpg" caption="What the clip shows" />
 import Cover from './Cover.astro';
 import type { Motif } from '../lib/cover';
 
@@ -27,6 +29,7 @@ const { src, video, caption, alt = caption ?? '', aspect = '16/9', seed = captio
       video={video}
       alt={alt}
       autoplay={!!video}
+      lazy
       class="absolute inset-0 rounded-2xl border border-line"
     />
   </div>

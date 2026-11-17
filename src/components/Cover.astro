@@ -16,10 +16,24 @@ interface Props {
   clay?: boolean;
   /** Show the browser's video controls (project pages). */
   controls?: boolean;
+  /** With autoplay: load and play the loop only while it is on screen (case-study clips). Give it a poster. */
+  lazy?: boolean;
 }
 
-const { seed, accent, motif, video, poster, alt = '', class: className = '', autoplay = false, clay = false, controls = false } =
-  Astro.props;
+const {
+  seed,
+  accent,
+  motif,
+  video,
+  poster,
+  alt = '',
+  class: className = '',
+  autoplay = false,
+  clay = false,
+  controls = false,
+  lazy = false,
+} = Astro.props;
+const inView = autoplay && lazy;
 const id = `c${seed.replace(/[^a-z0-9]/gi, '').toLowerCase()}${clay ? 'clay' : ''}`;
 const prims = coverScene(seed, clay ? '#bbbbbb' : accent, motif);
 const blurs = [...new Set(prims.map((p) => p.blur).filter((b): b is number => !!b))];
@@ -36,10 +50,11 @@ const fid = (b: number) => `${id}-b${String(b).replace('.', '_')}`;
         muted
         loop
         playsinline
-        preload={autoplay ? 'auto' : 'none'}
-        autoplay={autoplay}
+        preload={autoplay && !inView ? 'auto' : 'none'}
+        autoplay={autoplay && !inView}
         controls={controls}
         data-hover-play={!autoplay}
+        data-inview-play={inView ? '' : undefined}
         aria-hidden={controls ? undefined : 'true'}
       />
     ) : poster ? (
