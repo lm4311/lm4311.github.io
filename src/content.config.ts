@@ -32,6 +32,8 @@ const work = defineCollection({
     poster: z.string().optional(),
     // YouTube video ID (the part after "v=" in the link). Shown at the top of the project page instead of `video`.
     youtube: z.string().optional(),
+    // A self-hosted full-length video (with sound) shown at the top instead of `video`, when there is no YouTube upload.
+    film: z.object({ src: z.string(), poster: z.string(), ratio: z.string().default('16 / 9') }).optional(),
     // External links shown as buttons on the project page.
     links: z
       .object({

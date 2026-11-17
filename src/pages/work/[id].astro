@@ -75,6 +75,8 @@ const links = [
       {
         d.youtube ? (
           <YouTube id={d.youtube} title={d.title} />
+        ) : d.film ? (
+          <Video src={d.film.src} poster={d.film.poster} ratio={d.film.ratio} title={d.title} class="" />
         ) : (
           <Cover
             seed={d.title}

@@ -1,0 +1,193 @@
+---
+title: iWasThere
+summary: A narrative underwater game in Unreal Engine 5 about coral bleaching. Dive a dying reef, photograph what is left of it, and see how it used to look.
+year: 2026
+category: games
+tags: [Narrative game, Climate, Games for Change, Unreal Engine 5]
+purpose: A Games for Change 2026 entry about the Fourth Global Coral Bleaching Event. You play a researcher diving a bleaching reef, filling an observation log with photos of nine spots and comparing each with how the reef looked when it was alive.
+role: Gameplay programmer and technical director, with gameplay and level design
+team: Under the Sea, a team of five
+duration: 5 months, from November 2025
+platform: PC, Unreal Engine 5.6
+credits:
+  - { name: Rita Qiu, role: 'Lead producer, narrative design, gameplay and level design' }
+  - { name: Winsey Wu, role: 'Co-producer, environment art, 3D animation, gameplay and level design' }
+  - { name: Jenny Li, role: 'Sound design, storyboard and cinematics, gameplay and level design' }
+  - { name: Rosalyn Shen, role: 'UI design and cinematics' }
+tools: [Unreal Engine 5.6, Blueprints, Splines, UMG, Sequencer, Niagara, Quixel Megascans, Diversion, FigJam, Notion]
+accent: '#58c4d8'
+video: /media/iwasthere/chase.mp4
+poster: /media/iwasthere/cover.webp
+film: { src: /media/iwasthere/playthrough.mp4, poster: /media/iwasthere/playthrough.jpg, ratio: '1280 / 696' }
+order: 8
+---
+
+{/* Sources: the user's full run-through recording (made by scripts/iwasthere-media.cjs: the video at the top, the
+    clips and posters in public/media/iwasthere/), and the team Discord (#resources and #meeting-notes, up to
+    25 Mar 2026), with its linked Notion pages. The level map is Winsey Wu's, posted in #resources on 30 Jan 2026.
+    Clips follow the run-through in play order. */}
+
+<Stats
+  items={[
+    { value: '11:48', label: 'Full run-through, with sound' },
+    { value: '9', label: 'Reef spots to photograph' },
+    { value: '2', label: 'Side stories: a coral and a clownfish' },
+    { value: '5 months', label: 'From pitch to packaged build' },
+  ]}
+/>
+
+## The game
+
+### "You're helping the world see what's really happening down there"
+
+You are a researcher diving into a reef zone during the **Fourth Global Coral Bleaching Event**. You have read the reports, the satellite images and the thermal stress models; this is the first time you see it with your own eyes.
+
+Your field notebook, the **Reef Observation Log**, holds nine photos of the reef as it used to be: bright, crowded, alive. Each one is greyed out until you find the same spot today and photograph it as it is now, pale and bleached. Between the photos, the game hands you two other points of view: a **coral** trying to feed itself, and a **clownfish** running from predators.
+
+The ending leaves the game world for the real one: the data behind the bleaching event, footage of reef restoration work, and conservation programs a player can join.
+
+## My contribution
+
+As **gameplay programmer and technical director**, I built the systems the player touches and brought the team's work together into one build:
+
+- **Diver controller:** third-person swimming with sprint (Shift), ascend (E) and descend (Q), a flashlight (F) and a first/third-person switch (T).
+- **Camera mode:** a first-person camera with a viewfinder HUD. Near one of the nine spots a crosshair appears and turns green when the shot lines up; a correct photo fills that page of the log and opens it.
+- **Reef Observation Log:** the 0/9 gallery of then-and-now photos, with each shot's date and time and a progress counter.
+- **Clownfish chase:** a quick-time escape on spline paths. I computed the fish and predator paths with flexible meeting points and branching routes; predators strike from either side and you dodge with A or D. Getting caught leads to a game-over screen and a retry from the start of the chase.
+- **Coral feeding:** the side story where you play a coral catching plankton.
+- **Tutorial guide:** instead of on-screen instructions, a clownfish swims ahead on a path that teaches movement, sprint, the view switch, ascend and descend, the flashlight and the camera.
+- **Integration and packaging:** on 19 March 2026 I merged every part (cinematics, UI, gallery, photo spots, reef collisions, conclusion) into one game and ran it end to end, ready for packaging.
+
+## Playing it, beat by beat
+
+The run-through at the top of the page, in order. The clips are silent; the full video has the narration and music.
+
+### Into the water
+
+<FrameRow>
+  <Frame
+    video="/media/iwasthere/menu.mp4"
+    src="/media/iwasthere/menu.jpg"
+    aspect="1280/696"
+    caption="The start menu"
+  />
+  <Frame
+    video="/media/iwasthere/dive-in.mp4"
+    src="/media/iwasthere/dive-in.jpg"
+    aspect="1280/696"
+    caption="The opening cinematic: off the boat and down to the reef"
+  />
+</FrameRow>
+
+### Learning to swim
+
+The tutorial level teaches the controls with short prompts in the corner, while the path itself does the guiding.
+
+<FrameRow>
+  <Frame
+    video="/media/iwasthere/tutorial.mp4"
+    src="/media/iwasthere/tutorial.jpg"
+    aspect="1280/696"
+    caption="Swimming the tutorial canyon"
+  />
+  <Frame
+    video="/media/iwasthere/flashlight.mp4"
+    src="/media/iwasthere/flashlight.jpg"
+    aspect="1280/696"
+    caption="Turning on the flashlight in the dark"
+  />
+</FrameRow>
+
+### The Reef Observation Log
+
+<FrameRow>
+  <Frame
+    video="/media/iwasthere/gallery.mp4"
+    src="/media/iwasthere/gallery.jpg"
+    aspect="1280/696"
+    caption="The log at 0/9: each page shows the spot as it used to be"
+  />
+  <Frame
+    video="/media/iwasthere/camera.mp4"
+    src="/media/iwasthere/camera.jpg"
+    aspect="1280/696"
+    caption="Camera mode: lining up the first spot and taking the photo"
+  />
+</FrameRow>
+
+### Side story: the coral
+
+<Frame
+  video="/media/iwasthere/coral.mp4"
+  src="/media/iwasthere/coral.jpg"
+  aspect="1280/696"
+  caption="Playing as a coral, closing its tentacles to catch plankton"
+/>
+
+### Side story: the clownfish
+
+Photographing the clownfish in its anemone starts the chase. Predators come out of the shadows from either side, and a prompt shows which way to dodge.
+
+<Frame
+  video="/media/iwasthere/clownfish-photo.mp4"
+  src="/media/iwasthere/clownfish-photo.jpg"
+  aspect="1280/696"
+  caption="The clownfish spot, through the camera"
+/>
+
+<FrameRow>
+  <Frame
+    video="/media/iwasthere/game-over.mp4"
+    src="/media/iwasthere/game-over.jpg"
+    aspect="1280/696"
+    caption="Caught by the hammerhead: the game-over screen, then a retry"
+  />
+  <Frame
+    video="/media/iwasthere/chase.mp4"
+    src="/media/iwasthere/chase.jpg"
+    aspect="1280/696"
+    caption="The second attempt, dodging predators along the spline path"
+  />
+</FrameRow>
+
+### Filling the log
+
+<FrameRow>
+  <Frame
+    video="/media/iwasthere/photo-hunt.mp4"
+    src="/media/iwasthere/photo-hunt.jpg"
+    aspect="1280/696"
+    caption="Finding the next spot and adding it to the log"
+  />
+  <Frame
+    video="/media/iwasthere/last-spot.mp4"
+    src="/media/iwasthere/last-spot.jpg"
+    aspect="1280/696"
+    caption="The last of the nine spots"
+  />
+</FrameRow>
+
+With all nine pages filled, the game cuts to its conclusion: the facts of the bleaching event, real footage of the reef and the people restoring it, and ways to help.
+
+## Level design
+
+The reef has two layers. The **tutorial layer** teaches movement and the camera on a single path, with a dead end and the first photo spot. The **middle layer** is the open reef: a critical path and side paths between coral walls, predator patrols, anemones as safe spots, tentacle blockers that open only at night, and the rest of the photo spots, numbered 1 to 9 on the map.
+
+<Boards
+  set="iwasthere"
+  items={[{ file: 'level-map', title: 'Level maps: the tutorial layer (photo spots 1 and 2) and the middle layer (spots 3 to 9), by Winsey Wu' }]}
+  lead
+  class="my-12 w-full"
+/>
+
+## How it came together
+
+- **November 2025:** the team settled on the reef ecosystem, then reworked the gameplay around exploration: gathering evidence that the reef is dying, with a coral and a clownfish side quest.
+- **December 2025:** the narrative was finalized; the coral became a narrative scene and the clownfish a quick-time chase on spline paths.
+- **January 2026:** I built the diver's movement, then the camera mode and the photo gallery, then the clownfish chase. The game got its name.
+- **February 2026:** the diver and the chase went into the real map, the tutorial switched to a clownfish guide, and I built the coral gameplay and the game-over and retry flow.
+- **March 2026:** cinematics, UI and the conclusion landed; I integrated everything, built the tutorial guide path, and the team packaged and tested the game.
+
+## Responsible AI use
+
+The Games for Change rules ask teams to report their use of AI. The narration voices in iWasThere are AI-generated; the script was written by the team.
