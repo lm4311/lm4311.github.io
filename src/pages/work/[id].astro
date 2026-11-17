@@ -6,6 +6,7 @@ import Base from '../../layouts/Base.astro';
 import Cover from '../../components/Cover.astro';
 import Frame from '../../components/Frame.astro';
 import YouTube from '../../components/YouTube.astro';
+import Video from '../../components/Video.astro';
 import Boards from '../../components/Boards.astro';
 import Reveal from '../../components/Reveal.astro';
 import Folds from '../../components/Folds.astro';
@@ -119,7 +120,7 @@ const links = [
       <!-- The container lets galleries inside the text column span the full page width (100cqw). -->
       <div class="@container">
         <div class="prose">
-          <Content components={{ Frame, Compare, Pipeline, Stats, YouTube, Boards, Reveal, Folds }} />
+          <Content components={{ Frame, Compare, Pipeline, Stats, YouTube, Video, Boards, Reveal, Folds }} />
         </div>
       </div>
     </div>

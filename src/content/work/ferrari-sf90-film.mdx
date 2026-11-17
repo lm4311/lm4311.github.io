@@ -26,9 +26,11 @@ order: 4
 ---
 
 import { studio, dusk, tunnel, bridge, titles } from '../../data/ferrari-sf90';
+import { studioLighting, drivingLighting } from '../../data/ferrari-sf90-lighting';
 
 {/* Cinematic page: the film leads, then stills from it in running order.
-    The still lists come from src/data/ferrari-sf90.ts (made by scripts/ferrari-sf90-images.cjs). */}
+    The still lists come from src/data/ferrari-sf90.ts (made by scripts/ferrari-sf90-images.cjs),
+    the lighting-study pairs from src/data/ferrari-sf90-lighting.ts (scripts/ferrari-sf90-lighting.cjs). */}
 
 ## The film
 
@@ -78,6 +80,32 @@ The last sequence runs along a coastal highway and across a bridge in low sun, w
 The SF90 Stradale title and the Ferrari prancing horse close the film, followed by the credits.
 
 <Boards set="ferrari-sf90/titles" items={titles} columns={2} />
+
+## Lighting study
+
+The film's own shots with every material replaced by matte grey, so only the lighting is left. I rendered them again with Lumen's lighting-only pass in Unreal Engine 5.8 and matched them to the frames of the film. Drag across an image to compare.
+
+### Studio lighting
+
+The reveal is built from rect lights that come on shot by shot. Without the paint, each one shows as a single soft gradient across the body.
+
+<Reveal set="ferrari-sf90/lighting" before="clay" after="final" beforeLabel="Lighting only" afterLabel="Final render" items={studioLighting} lead />
+
+### Driving scenes
+
+Outside, the car is lit by the sky and a low sun. With the reflections gone it reads much darker than in the film, because most of its brightness there is the paint mirroring the sky. Environment lighting by Zedong Lin.
+
+<Reveal set="ferrari-sf90/lighting" before="clay" after="final" beforeLabel="Lighting only" afterLabel="Final render" items={drivingLighting} lead />
+
+The film with its lighting-only version underneath, shot for shot in the same cut:
+
+<Video
+  src="/media/ferrari-sf90/lighting-study.mp4"
+  poster="/media/ferrari-sf90/lighting-study-poster.webp"
+  ratio="1280 / 1070"
+  title="Final render and lighting-only version of the film, one above the other"
+  caption="Final render above, lighting only below. 1:36, with sound."
+/>
 
 ## My contribution
 

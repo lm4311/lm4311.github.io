@@ -1,0 +1,31 @@
+---
+// A self-hosted video clip with controls. Nothing downloads until the visitor presses play.
+// MDX: <Video src="/media/clip.mp4" poster="/media/clip.webp" ratio="16 / 9" title="Cabin tour" caption="…" />
+interface Props {
+  /** Path under /public. */
+  src: string;
+  poster?: string;
+  /** Width / height of the video, so the page does not jump when it loads. */
+  ratio?: string;
+  title: string;
+  caption?: string;
+  class?: string;
+}
+
+const { src, poster, ratio = '16 / 9', title, caption, class: className = 'my-10' } = Astro.props;
+---
+
+<figure class:list={['not-prose', className]}>
+  <video
+    controls
+    playsinline
+    preload="none"
+    poster={poster}
+    aria-label={title}
+    class="block w-full rounded-2xl border border-line bg-surface"
+    style={`aspect-ratio: ${ratio}`}
+  >
+    <source src={src} type="video/mp4" />
+  </video>
+  {caption && <figcaption class="hud mt-3">{caption}</figcaption>}
+</figure>
