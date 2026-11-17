@@ -45,9 +45,9 @@ const CLIPS = [
   ['dial-code', 'reel', 238, 18, 240.5],
   ['combat', 'loop', 0, 15, 3], // reel 4:20
   ['horde', 'loop', 33, 15, 35.3], // reel 4:53
-  ['boss-reveal', 'reel', 309, 14, 312],
-  ['boss-fight', 'reel', 336, 16, 350.5],
-  ['creature-boss', 'reel', 366, 19, 374],
+  ['butcher', 'reel', 309, 14, 312],
+  ['bearman', 'reel', 336, 16, 350.5],
+  ['dragon', 'reel', 366, 19, 374],
 ];
 
 const imgDir = path.join(ROOT, 'src', 'assets', 'work', 'last-sonata');
