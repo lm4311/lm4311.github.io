@@ -39,6 +39,8 @@ const work = defineCollection({
       .object({
         video: z.string().url().optional(),
         demo: z.string().url().optional(),
+        // A short line shown under the buttons, e.g. the password of a restricted demo page.
+        demoNote: z.string().optional(),
         code: z.string().url().optional(),
         // Documentation: a full URL, or a file in public/ such as '/docs/manual.pdf'.
         docs: z.string().optional(),
