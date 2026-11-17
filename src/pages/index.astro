@@ -9,6 +9,7 @@ const projects = await getProjects();
 const featured = projects.filter((p) => p.data.featured);
 // Mocap projects get their own section unless they've been promoted to featured.
 const mocap = projects.filter((p) => p.data.category === 'mocap' && !p.data.featured);
+const games = projects.filter((p) => p.data.category === 'games' && !p.data.featured);
 ---
 
 <Base>
@@ -45,6 +46,20 @@ const mocap = projects.filter((p) => p.data.category === 'mocap' && !p.data.feat
         <h2 class="font-display text-3xl sm:text-4xl">{groupLabel.mocap}</h2>
         <div class="mt-10 grid gap-x-10 gap-y-16 md:grid-cols-2">
           {mocap.map((project) => (
+            <ProjectCard project={project} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Games -->
+  {
+    games.length > 0 && (
+      <section id="games" class="container-x scroll-mt-20 border-t border-line py-16 sm:py-20">
+        <h2 class="font-display text-3xl sm:text-4xl">{groupLabel.games}</h2>
+        <div class="mt-10 grid gap-x-10 gap-y-16 md:grid-cols-2">
+          {games.map((project) => (
             <ProjectCard project={project} />
           ))}
         </div>

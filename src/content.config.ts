@@ -10,7 +10,7 @@ const work = defineCollection({
     summary: z.string(),
     year: z.number(),
     // Project group (see `groups` in src/data/site.ts).
-    category: z.enum(['xr', 'visualization', 'mocap']),
+    category: z.enum(['xr', 'visualization', 'mocap', 'games']),
     // A few short tags shown on cards.
     tags: z.array(z.string()),
 

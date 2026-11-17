@@ -22,6 +22,7 @@ export const groups = [
   { key: 'xr', title: 'XR & Interactive Experiences' },
   { key: 'visualization', title: 'Product Visualization & Film' },
   { key: 'mocap', title: 'Motion Capture & Performance' },
+  { key: 'games', title: 'Games' },
 ] as const;
 
 export const groupLabel: Record<string, string> = Object.fromEntries(groups.map((g) => [g.key, g.title]));
