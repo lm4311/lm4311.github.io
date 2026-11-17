@@ -1,0 +1,79 @@
+---
+title: Oath and Shadow
+summary: A four-week sprint from OptiTrack motion capture to a real-time cinematic sword fight in Unreal Engine 5.
+year: 2025
+category: mocap
+tags: [Motion capture, Sword fight, MetaHuman, Unreal Engine 5]
+purpose: A real-time cinematic of a knight and an assassin fighting in a medieval cathedral, built from motion capture.
+role: Cinematic lead and technical artist
+duration: 4 weeks, September to October 2025
+platform: OptiTrack → MotionBuilder → Unreal Engine 5
+tools: [OptiTrack Motive, MotionBuilder, Unreal Engine 5, MetaHuman, Live Link, Control Rig, Sequencer, Movie Render Queue]
+motif: skeleton
+accent: '#e8c46a'
+video: /media/oath-and-shadow/card.mp4
+poster: /media/oath-and-shadow/cover.webp
+youtube: FBQGlg1bfSE
+order: 5
+---
+
+import { week1, week2, week3, week4 } from '../../data/oath-and-shadow';
+
+{/* Migrated from the old portfolio site (Cinematic1.html). The image and clip lists come from
+    src/data/oath-and-shadow.ts, made by scripts/mocap-media.cjs. */}
+
+## My focus
+
+Mocap cleaning, retargeting, Sequencer and lighting: taking a two-actor sword fight from the OptiTrack stage, through MotionBuilder, to the final render in Unreal Engine 5.
+
+## Production log: the 0 to 1 process
+
+### Week 1: Motion capture and data strategy
+
+We used the **OptiTrack system** to record complex sword-fighting choreography. The main challenge was managing occlusion during close-combat sequences.
+
+After capture, I brought the raw data into **MotionBuilder**. The raw fight capture came without a mesh, so I inspected the take in MotionBuilder first and retargeted it to a Mixamo character to verify the bone rotations before export.
+
+**Focus:** OptiTrack · MotionBuilder setup · raw data cleaning
+
+<Boards set="oath-and-shadow" items={week1.images} lead />
+
+<Clips items={week1.clips} />
+
+### Week 2: MetaHuman and Live Link
+
+I set up the **Live Link** connection to stream animation data directly from MotionBuilder to Unreal Engine 5. This allowed real-time visualization of the performance on our target assets.
+
+**Problem solving:** a retargeting error twisted the MetaHuman's forearms unnaturally. It came from a mismatch in the T-pose definition between the source data and the MetaHuman skeleton, which I resolved by adjusting the bone mapping in the retargeting settings.
+
+**Focus:** Live Link · MetaHuman retargeting · real-time visualization
+
+<Boards set="oath-and-shadow" items={week2.images} lead />
+
+<Clips items={week2.clips} />
+
+### Week 3: Multi-character Blueprinting
+
+We chose a medieval cathedral environment in the style of *Assassin's Creed Unity*. I created a modular Blueprint system where the **Knight** and the **Assassin** could share a single animation skeleton.
+
+This was crucial because our raw mocap file held the data for both actors at once. By mapping two character Blueprints to their own data streams, I could drive the entire fight scene from a single source file and keep the two performers perfectly in sync.
+
+**Focus:** character Blueprints · shared skeletons · environment staging
+
+<Boards set="oath-and-shadow" items={week3.images} columns={3} lead />
+
+<Clips items={week3.clips} />
+
+### Week 4: Control Rig and Sequencer
+
+The final stage was heavy cleanup with **Control Rig** to fix jitter and foot sliding. The raw data often ignored the physical weapons, so I constrained the sword assets to the hand bones by hand and cleaned up the intersection points.
+
+In the **Level Sequencer**, I keyed camera moves that follow the action, adjusting focal lengths to emphasize the intensity of the combat, before sending the shots to the Movie Render Queue.
+
+**Focus:** Control Rig cleanup · weapon constraints · camera sequencing
+
+<Boards set="oath-and-shadow" items={week4.images} columns={3} lead />
+
+## The result
+
+The final cinematic render is the film at the top of this page.

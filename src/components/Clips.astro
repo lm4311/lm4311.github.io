@@ -1,0 +1,48 @@
+---
+// A grid of self-hosted clips with controls, for behind-the-scenes footage and editor recordings.
+// Nothing downloads until the visitor presses play; each clip shows its poster still until then.
+// MDX: <Clips items={[{ src: '/media/x/clip.mp4', poster: '/media/x/clip.webp', title: 'What it shows', ratio: '16 / 9' }]} />
+export interface Clip {
+  src: string;
+  poster: string;
+  title: string;
+  /** Width / height, so the page does not jump when the clip loads. */
+  ratio?: string;
+  /** The clip has sound worth hearing. */
+  sound?: boolean;
+}
+
+interface Props {
+  items: Clip[];
+  /** Clips per row on a wide screen. */
+  columns?: 1 | 2;
+  class?: string;
+}
+
+const { items, columns = 2, class: className = 'my-12 w-[100cqw]' } = Astro.props;
+const grid = columns === 1 || items.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
+---
+
+<div class:list={['not-prose grid gap-x-5 gap-y-8', grid, className]}>
+  {
+    items.map((c) => (
+      <figure>
+        <video
+          controls
+          playsinline
+          preload="none"
+          poster={c.poster}
+          aria-label={c.title}
+          class="block w-full rounded-xl border border-line bg-surface"
+          style={`aspect-ratio: ${c.ratio ?? '16 / 9'}`}
+        >
+          <source src={c.src} type="video/mp4" />
+        </video>
+        <figcaption class="mt-3 text-sm leading-6">
+          <span class="font-medium text-ink">{c.title}</span>
+          {c.sound && <span class="text-muted"> · with sound</span>}
+        </figcaption>
+      </figure>
+    ))
+  }
+</div>

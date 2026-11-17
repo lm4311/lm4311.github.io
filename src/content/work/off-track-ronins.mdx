@@ -1,0 +1,111 @@
+---
+title: Off Track Ronins
+summary: Performance capture and ICVFX in Unreal Engine 5, simulating the weight of the blade in a feudal Japanese setting.
+year: 2025
+category: mocap
+tags: [Performance capture, ICVFX, Volumetric capture, Unreal Engine 5]
+purpose: A short film in which an office worker's breakdown crashes into a samurai sword fight, moving between live action and CGI.
+role: Director, lead animator and mocap technical director
+duration: 6 weeks, November to December 2025
+platform: OptiTrack → MotionBuilder → Unreal Engine 5 → DaVinci Resolve
+tools: [OptiTrack Motive, MotionBuilder, Unreal Engine 5, MetaHuman, IK Retargeter, Live Link, Control Rig, Sequencer, LED volume (ICVFX), Volumetric capture, DaVinci Resolve]
+motif: skeleton
+accent: '#f2a37a'
+video: /media/off-track-ronins/card.mp4
+poster: /media/off-track-ronins/cover.webp
+youtube: h0zR6O2bJP4
+order: 6
+---
+
+import { week1, week2, week3, week4, week5, week6 } from '../../data/off-track-ronins';
+
+{/* Migrated from the old portfolio site (Cinematic2.html). The image and clip lists come from
+    src/data/off-track-ronins.ts, made by scripts/mocap-media.cjs. */}
+
+## My focus
+
+Performance capture, retargeting, Control Rig, Sequencer and lighting, volumetric capture and ICVFX.
+
+## Production log: forging the scene
+
+### Week 1: Environment and atmosphere
+
+The visual direction relied on a sharp contrast. We built a **sterile, monochrome office** designed to feel suffocating and repetitive, with rigid grid layouts that stress the protagonist's entrapment.
+
+The **samurai world**, in contrast, is a vibrant, sun-scorched post-apocalyptic wasteland. We worked from an "asset zoo", curating high-fidelity props so the cut from the dull corporate world to the chaotic battlefield feels jarring and powerful.
+
+**Focus:** environment design · Unreal Engine · art direction
+
+<Boards set="off-track-ronins" items={week1.images} columns={3} lead />
+
+<Clips items={week1.clips} />
+
+### Week 2: Combat choreography
+
+We moved from the desk to the dojo. This week was all **combat choreography**, translating the protagonist's inner rage into decisive samurai movement. We broke the "crash out" sequence down beat by beat, practicing with prop katanas for safety and fluidity.
+
+The focus was on **performance**: making the weight behind each strike feel real before bringing it onto the motion capture stage. We spent hours refining the timing of the parries and strikes to match the fast rhythm of the final edit.
+
+**Focus:** fight choreography · stunt coordination · mocap preparation
+
+<Boards set="off-track-ronins" items={week2.images} lead />
+
+<Clips items={week2.clips} />
+
+### Week 3: Retargeting and the Live Link pipeline
+
+To prepare for the motion capture shoot, I built a retargeting pipeline that maps the OptiTrack skeleton onto three different targets: the standard **UE5 Manny**, a high-fidelity **MetaHuman** and our **custom Samurai** model.
+
+The Samurai was the hard one: its non-standard bone names broke auto-generation, so I **chained the IK Rigs by hand** to make it work with the IK Retargeter.
+
+To stream data from Motive to Unreal without friction, I built a modular workflow: *IK Rigs → IK Retargeter → Animation Blueprint → Actor Blueprint*. The same setup takes any major skeleton type.
+
+**Focus:** IK retargeting · Motive Live Link · Animation Blueprints
+
+<Boards set="off-track-ronins" items={week3.images} columns={3} lead />
+
+<Clips items={week3.clips} />
+
+### Week 4: Real-time performance capture
+
+Production peaked on the motion capture stage, with a full **real-time previsualization** workflow. Motive streamed straight into UE5, tracking the actors' **skeletons** and the **rigid-body** props at the same time.
+
+This live feedback let us see the "crash out" in real time and make sure the **stunt performances** lined up with the virtual environment. The session was a marathon of technical precision, recorded in our behind-the-scenes timelapse and team photos.
+
+**Focus:** real-time previz · rigid-body tracking · stunt performance
+
+<Boards set="off-track-ronins" items={week4.images} columns={3} lead />
+
+<Clips items={week4.clips} />
+
+### Week 5: Animation cleanup and sequencing
+
+Post-production started with **selecting the mocap takes** and processing them in **MotionBuilder**. I handled dual-skeleton retargeting and **rigid-body integration** so the physical props stay in sync with the character animation.
+
+For the precision a sword fight needs, I used an **IK/FK Control Rig workflow** on the MetaHuman skeleton. It let me refine scenes 01 to 29 frame by frame for **exact blade contact** and grounded footwork that raw mocap often misses.
+
+Finally, I assembled a **Level Sequencer** for each scene, set up the cinematic cameras and locked the **shot direction** that drives the pacing.
+
+**Focus:** MotionBuilder · Control Rig cleanup · Sequencer assembly
+
+<Boards set="off-track-ronins" items={week5.images} columns={3} lead />
+
+<Clips items={week5.clips} />
+
+### Week 6: ICVFX and volumetric integration
+
+To capture the protagonist's suffocating reality before the transition, we shot on an **LED volume (ICVFX)** with real-time camera tracking. That gave the office scenes correct parallax and lighting in camera.
+
+For the pivotal "crash out", when the worker throws paper in rage, we used a **volumetric capture workflow**. It allowed a seamless transition from the live-action footage into the CGI samurai world, blurring the line between physical and digital.
+
+The project finished in **DaVinci Resolve**, where my team handled the final compositing: merging the SFX, VFX and CGI with the live-action footage, and locking the grade that sharpens the contrast between the sterile office and the vivid wasteland.
+
+**Focus:** LED volume / ICVFX · volumetric capture · DaVinci Resolve
+
+<Boards set="off-track-ronins" items={week6.images} columns={2} lead />
+
+<Clips items={week6.clips} />
+
+## The result
+
+The final composition is the film at the top of this page.
