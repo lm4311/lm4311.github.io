@@ -19,7 +19,8 @@ order: 7
 
 {/* Migrated from the old portfolio site (Game1.html). Stills: src/assets/work/last-sonata/; clips and the card
     poster: public/media/last-sonata/; the PDF: public/docs/. All made by scripts/last-sonata-media.cjs.
-    The gameplay demo at the top is the YouTube video the old page embedded. */}
+    The gameplay demo at the top is the YouTube video the old page embedded; the clips under "Core gameplay"
+    follow it beat by beat, in order. */}
 
 ## The concept
 
@@ -45,23 +46,117 @@ As the solo creator, I serve as both programmer and designer. I built the shooti
 
 My focus was on game feel: tuning weapon recoil, scripting multi-phase boss battles, and optimizing performance (LODs, object pooling) to keep the action fluid.
 
-<Frame
-  video="/media/last-sonata/combat.mp4"
-  src="/media/last-sonata/combat.jpg"
-  caption="Gameplay: rifle combat through the burning outskirts of the city"
-/>
-
 ## Key outcomes
 
 - **Immersive combat:** system-driven combat with clear attack cues and cinematic transitions.
 - **Advanced AI:** horde AI using NavMesh and NavLinks for complex pathfinding and crowd queuing.
 - **Polish:** dynamic crosshairs, motion-warped traversal and polished UI feedback.
 
+## Core gameplay
+
+The demo reel at the top of the page, broken into its gameplay beats, in order.
+
+### Night falls on the village
+
 <Frame
-  video="/media/last-sonata/horde.mp4"
-  src="/media/last-sonata/horde.jpg"
-  caption="Gameplay: the horde climbing the perimeter fence to reach the player"
+  video="/media/last-sonata/arrival.mp4"
+  src="/media/last-sonata/arrival.jpg"
+  caption="Arriving in the village at night, and the first infected"
 />
+
+### Searching the house
+
+Exploration runs on a flashlight, inspectable objects and clues that unlock the way forward.
+
+<FrameRow>
+  <Frame
+    video="/media/last-sonata/house-search.mp4"
+    src="/media/last-sonata/house-search.jpg"
+    caption="Searching the house by flashlight and inspecting a family portrait"
+  />
+  <Frame
+    video="/media/last-sonata/house-infected.mp4"
+    src="/media/last-sonata/house-infected.jpg"
+    caption="An infected waiting inside the house"
+  />
+</FrameRow>
+
+<FrameRow>
+  <Frame
+    video="/media/last-sonata/piano.mp4"
+    src="/media/last-sonata/piano.jpg"
+    caption="The piano and its sheet music: the Last Sonata"
+  />
+  <Frame
+    video="/media/last-sonata/door-key.mp4"
+    src="/media/last-sonata/door-key.jpg"
+    caption="The door key to the scientist's private bedroom"
+  />
+</FrameRow>
+
+<FrameRow>
+  <Frame
+    video="/media/last-sonata/journal.mp4"
+    src="/media/last-sonata/journal.jpg"
+    caption="The journal's entries on the infected creatures"
+  />
+  <Frame
+    video="/media/last-sonata/death-letter.mp4"
+    src="/media/last-sonata/death-letter.jpg"
+    caption="The scientist's Death Letter, with the code to the graveyard gate"
+  />
+</FrameRow>
+
+### The graveyard gate
+
+<FrameRow>
+  <Frame
+    video="/media/last-sonata/village.mp4"
+    src="/media/last-sonata/village.jpg"
+    caption="Out into the misty village"
+  />
+  <Frame
+    video="/media/last-sonata/dial-code.mp4"
+    src="/media/last-sonata/dial-code.jpg"
+    caption="Collecting Dial Code scraps across the graveyard"
+  />
+</FrameRow>
+
+### Holding the line
+
+<FrameRow>
+  <Frame
+    video="/media/last-sonata/combat.mp4"
+    src="/media/last-sonata/combat.jpg"
+    caption="Rifle combat through the burning outskirts of the city"
+  />
+  <Frame
+    video="/media/last-sonata/horde.mp4"
+    src="/media/last-sonata/horde.jpg"
+    caption="The horde climbing the perimeter fence to reach the player"
+  />
+</FrameRow>
+
+### Boss fights
+
+<Frame
+  video="/media/last-sonata/boss-reveal.mp4"
+  src="/media/last-sonata/boss-reveal.jpg"
+  caption="The chainsaw boss steps out of the fog"
+/>
+
+<FrameRow>
+  <Frame
+    video="/media/last-sonata/boss-fight.mp4"
+    src="/media/last-sonata/boss-fight.jpg"
+    caption="Fighting the chainsaw boss"
+  />
+  <Frame
+    video="/media/last-sonata/creature-boss.mp4"
+    src="/media/last-sonata/creature-boss.jpg"
+    caption="A winged creature boss, fought with fire and ice"
+  />
+</FrameRow>
 
 ## Design and systems analysis
 
