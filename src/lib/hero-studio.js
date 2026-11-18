@@ -260,6 +260,8 @@ export function start(stage, options = {}) {
   key.shadow.camera.near = 2; key.shadow.camera.far = 30; on(key, 0.32, 'key');
 
   // Frame the name: about two thirds of the width on a wide screen, more of it on a narrow one.
+  const LENS = 24; // the camera's vertical angle of view on a wide screen, in degrees
+  const FARTHEST = 14.2; // about where the camera stands on a laptop screen
   let dist = 12, resized = false;
   const layout = () => {
     const w = stage.clientWidth, h = stage.clientHeight;
@@ -268,7 +270,15 @@ export function start(stage, options = {}) {
     renderer.setSize(w, h, false);
     camera.aspect = aspect;
     const fill = aspect < 1 ? 1.2 : 1.5;
-    dist = Math.max(11.5, (W * fill) / (2 * Math.tan(THREE.MathUtils.degToRad(12)) * aspect));
+    // How far back the camera has to stand for the name to fit, with the standard lens.
+    const fit = (W * fill) / (2 * Math.tan(THREE.MathUtils.degToRad(LENS / 2)) * aspect);
+    // On a narrow screen that is very far (nearly three times as far on a phone), and from there the camera looks
+    // almost along the floor: the floor, the shadow and the reflection shrink to a thin strip under the letters,
+    // and the lights, which reach a fixed distance, light only a sliver of it. So the camera never stands further
+    // back than it does on a wide screen. A narrow screen gets a taller lens instead: the name is seen from the
+    // same place, with the same floor in front of it, and the extra height of the screen shows more wall and floor.
+    dist = Math.min(FARTHEST, Math.max(11.5, fit));
+    camera.fov = fit > dist ? THREE.MathUtils.radToDeg(2 * Math.atan((W * fill) / (2 * aspect * dist))) : LENS;
     // Put the name in the free space above the text, whatever the text's height (it is much taller on a phone).
     // The view is shifted, not the camera, so the perspective on the letters stays the same.
     camera.clearViewOffset();
