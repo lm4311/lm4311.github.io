@@ -90,7 +90,7 @@ export const skills = [
 export const experience = [
   {
     when: '2026',
-    role: 'Developer',
+    role: 'Solo developer',
     org: 'OptiTrack VR Multiplayer Plugin',
     href: '/work/optitrack-vr-multiplayer-plugin/',
     note: 'A C++ plugin for Unreal Engine 5.8: tracking fusion, OpenXR integration, calibration, the multiplayer session framework and hand tracking.',
