@@ -55,69 +55,63 @@ const canonical = new URL(Astro.url.pathname, site.url);
       const fine = matchMedia('(hover: hover) and (pointer: fine)');
       const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
-      // ---------- The cursor: the dot is exact, the ring follows a beat behind ----------
-      // Styles are under "The cursor" in global.css. The ring changes over [data-cursor] cards (it shows their
-      // word), over links and buttons, and over the homepage opening ([data-hero]).
-      const cursor = { x: 0, y: 0, rx: 0, ry: 0, seen: false, dot: null as HTMLElement | null, ring: null as HTMLElement | null };
+      // ---------- The cursor: one small point that changes shape ----------
+      // Styles are under "The cursor" in global.css. It becomes a ring over links and buttons, a disc with a word
+      // over [data-cursor] pictures, and a point of light over the homepage opening ([data-hero]).
+      const cursor = { x: 0, y: 0, sx: 0, sy: 0, seen: false, el: null as HTMLElement | null };
       function mountCursor() {
         if (!fine.matches) return;
-        // The page's body is replaced on every page change, so the two elements are put back each time.
-        cursor.ring = document.createElement('div');
-        cursor.ring.className = 'cur-ring';
-        cursor.ring.setAttribute('aria-hidden', 'true');
-        cursor.ring.innerHTML = '<i><span></span></i>';
-        cursor.dot = document.createElement('div');
-        cursor.dot.className = 'cur-dot';
-        cursor.dot.setAttribute('aria-hidden', 'true');
-        document.body.append(cursor.ring, cursor.dot);
+        // The page's body is replaced on every page change, so the element is put back each time.
+        cursor.el = document.createElement('div');
+        cursor.el.className = 'cur';
+        cursor.el.setAttribute('aria-hidden', 'true');
+        cursor.el.innerHTML = '<i><span></span></i>';
+        document.body.append(cursor.el);
         if (cursor.seen) document.documentElement.classList.add('custom-cursor');
       }
       document.addEventListener(
         'pointermove',
         (e) => {
-          if (e.pointerType !== 'mouse' || !cursor.ring || !cursor.dot) return;
+          if (e.pointerType !== 'mouse' || !cursor.el) return;
           cursor.x = e.clientX;
           cursor.y = e.clientY;
           if (!cursor.seen) {
             cursor.seen = true;
-            cursor.rx = cursor.x;
-            cursor.ry = cursor.y;
+            cursor.sx = cursor.x;
+            cursor.sy = cursor.y;
             document.documentElement.classList.add('custom-cursor');
           }
           const target = e.target instanceof Element ? e.target : null;
           const card = target?.closest('[data-cursor]');
           const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
           const light = target?.closest('[data-hero].is-live');
+          cursor.el.classList.toggle('on-card', !!card);
+          cursor.el.classList.toggle('on-link', !card && !!link);
+          cursor.el.classList.toggle('on-light', !card && !link && !!light);
           // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
-          const away = target instanceof HTMLIFrameElement;
-          cursor.ring.classList.toggle('on-card', !!card);
-          cursor.ring.classList.toggle('on-link', !card && !!link);
-          cursor.ring.classList.toggle('on-light', !card && !link && !!light);
-          cursor.ring.classList.toggle('is-away', away);
-          cursor.dot.classList.toggle('is-away', away);
-          cursor.dot.classList.toggle('is-label', !!card); // the ring's word takes the dot's place
-          if (card) cursor.ring.querySelector('span')!.textContent = card.getAttribute('data-cursor');
+          cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
+          if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');
         },
         { passive: true },
       );
-      // Leaving the window, or entering an embedded video: hide ours until the mouse comes back.
+      document.addEventListener('pointerdown', () => cursor.el?.classList.add('is-down'));
+      document.addEventListener('pointerup', () => cursor.el?.classList.remove('is-down'));
+      // Leaving the window: hide ours until the mouse comes back.
       document.addEventListener('mouseout', (e) => {
-        if (e.relatedTarget) return;
-        cursor.ring?.classList.add('is-away');
-        cursor.dot?.classList.add('is-away');
+        if (!e.relatedTarget) cursor.el?.classList.add('is-away');
       });
       (function follow() {
         requestAnimationFrame(follow);
-        if (!cursor.ring || !cursor.dot || !cursor.seen) return;
+        if (!cursor.el || !cursor.seen) return;
         // A dialog (the image viewer) opens in the browser's top layer, above the rest of the page,
         // so while one is open the cursor lives inside it.
         const host = document.querySelector('dialog[open]') ?? document.body;
-        if (cursor.ring.parentElement !== host) host.append(cursor.ring, cursor.dot);
-        const k = reduced.matches ? 1 : 0.17;
-        cursor.rx += (cursor.x - cursor.rx) * k;
-        cursor.ry += (cursor.y - cursor.ry) * k;
-        cursor.dot.style.transform = `translate3d(${cursor.x}px, ${cursor.y}px, 0)`;
-        cursor.ring.style.transform = `translate3d(${cursor.rx.toFixed(1)}px, ${cursor.ry.toFixed(1)}px, 0)`;
+        if (cursor.el.parentElement !== host) host.append(cursor.el);
+        // It trails the mouse by a hair, which reads as smooth without feeling slow.
+        const k = reduced.matches ? 1 : 0.34;
+        cursor.sx += (cursor.x - cursor.sx) * k;
+        cursor.sy += (cursor.y - cursor.sy) * k;
+        cursor.el.style.transform = `translate3d(${cursor.sx.toFixed(1)}px, ${cursor.sy.toFixed(1)}px, 0)`;
       })();
 
       // ---------- 3D tilt: [data-tilt] elements lean toward the cursor ----------
