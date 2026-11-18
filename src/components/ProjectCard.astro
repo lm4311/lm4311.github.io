@@ -1,6 +1,9 @@
 ---
 // Project card: strong image, title, one sentence and a few tags.
-// A project marked `inDevelopment` gets the same card with an "Under development" label and no link.
+// The card is a 3D object (styles under "Project cards" in global.css, tilt script in Base.astro): it tilts toward
+// the cursor, one beam of light glides across the picture when the cursor arrives, and the award laurel or the
+// "Under development" label floats above the picture.
+// A project marked `inDevelopment` gets the same card with that label and no link.
 import type { CollectionEntry } from 'astro:content';
 import Cover from './Cover.astro';
 import Laurel from './Laurel.astro';
@@ -15,52 +18,50 @@ const { title, summary, category, tags, accent, motif, video, poster, placeholde
 const Wrap = inDevelopment ? 'div' : 'a';
 ---
 
-<article class="project-card group">
-  <Wrap href={inDevelopment ? undefined : `/work/${project.id}/`} class="block">
-    <div class="relative">
-      <Cover
-        seed={title}
-        accent={accent}
-        motif={motif}
-        video={video}
-        poster={poster}
-        alt=""
-        class={`aspect-video rounded-2xl border border-line${inDevelopment ? '' : ' transition-transform duration-500 group-hover:scale-[1.01]'}`}
-      />
-      {/* An award sits on the picture as a white laurel, top left, and stays there while the loop plays. */}
+<!-- data-cursor is the word the cursor's ring shows over this card. -->
+<article class="project-card group" data-tilt data-reveal data-cursor={inDevelopment ? 'Soon' : 'View'}>
+  <Wrap href={inDevelopment ? undefined : `/work/${project.id}/`} class="card-body">
+    <div class="card-frame">
+      <!-- The picture grows into the project page's top media when the card is opened. -->
+      <div class="card-shot" transition:name={inDevelopment ? undefined : `cover-${project.id}`}>
+        <Cover seed={title} accent={accent} motif={motif} video={video} poster={poster} alt="" class="card-pic aspect-video" />
+        <span class="card-beam" aria-hidden="true"></span>
+      </div>
       {
         award && (
           <Laurel
             {...award}
-            class="pointer-events-none absolute left-[4%] top-[6%] w-[34%] max-w-48 text-white drop-shadow-[0_1px_8px_rgb(0_0_0/0.5)]"
+            class="card-float pointer-events-none absolute left-[4%] top-[6%] w-[34%] max-w-48 text-white drop-shadow-[0_1px_8px_rgb(0_0_0/0.5)]"
           />
         )
       }
       {
         inDevelopment && (
-          <span class="absolute left-3 top-3 rounded-full border border-line bg-bg/80 px-3 py-1 text-xs font-medium text-ink backdrop-blur-sm">
+          <span class="card-float absolute left-3 top-3 rounded-full border border-line bg-bg/80 px-3 py-1 text-xs font-medium text-ink shadow-[0_10px_24px_-10px_rgb(0_0_0/0.8)]">
             Under development
           </span>
         )
       }
     </div>
-    <p class="mt-5 text-sm text-muted">
-      {groupLabel[category]}
-      {placeholder && !inDevelopment && <span class="ml-1.5 rounded-full border border-line px-2 py-0.5 text-xs">Sample</span>}
-    </p>
-    <h3 class="font-display mt-1.5 text-2xl sm:text-[1.75rem]">
-      <span
-        class:list={[
-          !inDevelopment &&
-            'bg-[length:0_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 [background-image:linear-gradient(currentColor,currentColor)] group-hover:bg-[length:100%_1px]',
-        ]}
-      >
-        {title}
-      </span>
-    </h3>
-    <p class="mt-2 max-w-xl text-[15px] leading-6 text-ink/75">{summary}</p>
-    <ul class="mt-4 flex flex-wrap gap-1.5" aria-label="Tags">
-      {tags.map((t) => <li class="rounded-full bg-surface px-2.5 py-1 text-xs text-ink/75">{t}</li>)}
-    </ul>
+    <div class="card-meta">
+      <p class="label mt-5">
+        {groupLabel[category]}
+        {placeholder && !inDevelopment && <span class="ml-1.5 rounded-full border border-line px-2 py-0.5">Sample</span>}
+      </p>
+      <h3 class="font-display mt-2 text-2xl sm:text-[1.75rem]">
+        <span
+          class:list={[
+            !inDevelopment &&
+              'bg-[length:0_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 [background-image:linear-gradient(currentColor,currentColor)] group-hover:bg-[length:100%_1px]',
+          ]}
+        >
+          {title}
+        </span>
+      </h3>
+      <p class="mt-2 max-w-xl text-[15px] leading-6 text-ink/75">{summary}</p>
+      <ul class="mt-4 flex flex-wrap gap-1.5" aria-label="Tags">
+        {tags.map((t) => <li class="rounded-full bg-surface px-2.5 py-1 text-xs text-ink/75">{t}</li>)}
+      </ul>
+    </div>
   </Wrap>
 </article>

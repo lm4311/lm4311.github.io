@@ -1,6 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
-import '@fontsource-variable/instrument-sans';
+// Weight and width axes: small labels use the narrow width.
+import '@fontsource-variable/instrument-sans/standard.css';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
@@ -29,9 +30,15 @@ const canonical = new URL(Astro.url.pathname, site.url);
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
-    <meta name="theme-color" content="#070809" />
+    <meta name="theme-color" content="#08090a" />
     <meta name="generator" content={Astro.generator} />
     <ClientRouter />
+    <!-- Marks that JavaScript runs, before the first paint: sections may then start dark and be revealed, and the
+         homepage's 3D name may stand in for the type. The class is put back after each page change. -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      document.addEventListener('astro:after-swap', () => document.documentElement.classList.add('js'));
+    </script>
   </head>
   <body class="flex min-h-svh flex-col">
     <a
@@ -45,8 +52,118 @@ const canonical = new URL(Astro.url.pathname, site.url);
     </main>
     <Footer />
     <script>
-      // Project loops play only while a card is hovered or focused.
+      const fine = matchMedia('(hover: hover) and (pointer: fine)');
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+      // ---------- The cursor: the dot is exact, the ring follows a beat behind ----------
+      // Styles are under "The cursor" in global.css. The ring changes over [data-cursor] cards (it shows their
+      // word), over links and buttons, and over the homepage opening ([data-hero]).
+      const cursor = { x: 0, y: 0, rx: 0, ry: 0, seen: false, dot: null as HTMLElement | null, ring: null as HTMLElement | null };
+      function mountCursor() {
+        if (!fine.matches) return;
+        // The page's body is replaced on every page change, so the two elements are put back each time.
+        cursor.ring = document.createElement('div');
+        cursor.ring.className = 'cur-ring';
+        cursor.ring.setAttribute('aria-hidden', 'true');
+        cursor.ring.innerHTML = '<i><span></span></i>';
+        cursor.dot = document.createElement('div');
+        cursor.dot.className = 'cur-dot';
+        cursor.dot.setAttribute('aria-hidden', 'true');
+        document.body.append(cursor.ring, cursor.dot);
+        if (cursor.seen) document.documentElement.classList.add('custom-cursor');
+      }
+      document.addEventListener(
+        'pointermove',
+        (e) => {
+          if (e.pointerType !== 'mouse' || !cursor.ring || !cursor.dot) return;
+          cursor.x = e.clientX;
+          cursor.y = e.clientY;
+          if (!cursor.seen) {
+            cursor.seen = true;
+            cursor.rx = cursor.x;
+            cursor.ry = cursor.y;
+            document.documentElement.classList.add('custom-cursor');
+          }
+          const target = e.target instanceof Element ? e.target : null;
+          const card = target?.closest('[data-cursor]');
+          const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
+          const light = target?.closest('[data-hero].is-live');
+          // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
+          const away = target instanceof HTMLIFrameElement;
+          cursor.ring.classList.toggle('on-card', !!card);
+          cursor.ring.classList.toggle('on-link', !card && !!link);
+          cursor.ring.classList.toggle('on-light', !card && !link && !!light);
+          cursor.ring.classList.toggle('is-away', away);
+          cursor.dot.classList.toggle('is-away', away);
+          if (card) cursor.ring.querySelector('span')!.textContent = card.getAttribute('data-cursor');
+        },
+        { passive: true },
+      );
+      // Leaving the window, or entering an embedded video: hide ours until the mouse comes back.
+      document.addEventListener('mouseout', (e) => {
+        if (e.relatedTarget) return;
+        cursor.ring?.classList.add('is-away');
+        cursor.dot?.classList.add('is-away');
+      });
+      (function follow() {
+        requestAnimationFrame(follow);
+        if (!cursor.ring || !cursor.dot || !cursor.seen) return;
+        const k = reduced.matches ? 1 : 0.17;
+        cursor.rx += (cursor.x - cursor.rx) * k;
+        cursor.ry += (cursor.y - cursor.ry) * k;
+        cursor.dot.style.transform = `translate3d(${cursor.x}px, ${cursor.y}px, 0)`;
+        cursor.ring.style.transform = `translate3d(${cursor.rx.toFixed(1)}px, ${cursor.ry.toFixed(1)}px, 0)`;
+      })();
+
+      // ---------- 3D tilt: [data-tilt] elements lean toward the cursor ----------
+      // Sets --rx and --ry (degrees) and --px and --py (-0.5 to 0.5) on the element; the CSS does the rest.
+      function mountTilt() {
+        if (!fine.matches || reduced.matches) return;
+        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((el) => {
+          const frame = el.querySelector<HTMLElement>('.card-frame, img') ?? el;
+          el.addEventListener('pointermove', (e) => {
+            const r = frame.getBoundingClientRect();
+            const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) - 0.5;
+            const y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) - 0.5;
+            el.classList.add('is-tilting');
+            el.style.setProperty('--ry', `${(x * 9).toFixed(2)}deg`);
+            el.style.setProperty('--rx', `${(-y * 7).toFixed(2)}deg`);
+            el.style.setProperty('--px', x.toFixed(3));
+            el.style.setProperty('--py', y.toFixed(3));
+          });
+          el.addEventListener('pointerleave', () => {
+            el.classList.remove('is-tilting');
+            el.style.setProperty('--rx', '0deg');
+            el.style.setProperty('--ry', '0deg');
+            el.style.setProperty('--px', '0');
+            el.style.setProperty('--py', '0');
+          });
+        });
+      }
+
+      // ---------- Sections come up from dark as they enter the screen ([data-reveal]) ----------
+      function mountReveal() {
+        const items = document.querySelectorAll<HTMLElement>('[data-reveal]');
+        if (!items.length) return;
+        const seen = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add('is-in');
+              seen.unobserve(entry.target);
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px' },
+        );
+        items.forEach((item) => seen.observe(item));
+      }
+
       document.addEventListener('astro:page-load', () => {
+        mountCursor();
+        mountTilt();
+        mountReveal();
+
+        // Project loops play only while a card is hovered or focused.
         document.querySelectorAll<HTMLElement>('.project-card').forEach((card) => {
           const video = card.querySelector<HTMLVideoElement>('video[data-hover-play]');
           if (!video) return;

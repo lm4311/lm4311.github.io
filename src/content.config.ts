@@ -53,7 +53,7 @@ const work = defineCollection({
     accent: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
-      .default('#62e6d3'),
+      .default('#8db4d8'),
     // Shape of the generated placeholder image until you add a poster.
     motif: z.enum(['car', 'jet', 'portal', 'panels', 'skeleton', 'tracking']).optional(),
 

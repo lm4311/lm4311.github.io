@@ -1,0 +1,209 @@
+---
+// Homepage opening: the name as a 3D object in a dark studio (src/lib/hero-studio.js), with the title,
+// introduction and buttons as real text over it.
+//
+// The frame stays in place while the visitor scrolls the first screen, and the scroll wipes it from the final render
+// to "lighting only". The name is also an ordinary <h1>: screen readers and search engines read it, and it is shown
+// as large type if the 3D scene cannot run (no JavaScript, no WebGL).
+import { site } from '../data/site';
+---
+
+<section class="hero-pin">
+  <div class="hero-stage" data-hero>
+    <canvas class="absolute inset-0 block h-full w-full" data-hero-canvas aria-hidden="true"></canvas>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="hero-wipe" data-hero-wipe aria-hidden="true">
+      <span class="label hero-wipe-l">Lighting only</span>
+      <span class="label hero-wipe-r">Final render</span>
+    </div>
+    <div class="hero-copy container-x" data-hero-copy>
+      <div class="max-w-xl min-w-0">
+        <h1 class="hero-name font-display">{site.name}</h1>
+        <p class="label">Based in {site.location}</p>
+        <p class="font-display mt-3 text-2xl leading-[1.15] sm:text-3xl">{site.role}</p>
+        <p class="mt-4 text-[15px] leading-7 text-ink/80 sm:text-[17px]">{site.intro}</p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="#work" class="btn-solid">View work <span aria-hidden="true">↓</span></a>
+          {site.resume && <a href={site.resume} class="btn">Résumé</a>}
+        </div>
+      </div>
+      <div class="hero-cue" data-hero-cue aria-hidden="true">
+        <p class="label">Rendered live in your browser</p>
+        <p class="label mt-1.5 text-ink">Scroll to see the lighting</p>
+        <div class="hero-cue-track"><i></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* The tall element gives the scroll distance; the stage sticks under the navigation bar while it is used up. */
+  .hero-pin {
+    --stage-h: max(520px, calc(100svh - 4rem));
+    height: calc(var(--stage-h) + 85svh);
+  }
+  .hero-stage {
+    position: sticky;
+    top: 4rem;
+    height: var(--stage-h);
+    overflow: hidden;
+    background: #040506;
+  }
+  .hero-shade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 50% 38%, transparent 55%, rgb(4 5 6 / 0.55) 100%),
+      linear-gradient(to top, rgb(4 5 6 / 0.94) 0%, rgb(4 5 6 / 0.6) 24%, transparent 50%);
+  }
+  /* A little film grain over the render. */
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.09;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .hero-copy {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding-bottom: clamp(1.5rem, 5svh, 3.25rem);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  /* The divider between the two renders. The script moves it; its labels sit on either side of the line. */
+  .hero-wipe {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .hero-wipe::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, rgb(241 240 236 / 0.85), rgb(241 240 236 / 0.85) 62%, transparent 92%);
+  }
+  .hero-wipe span {
+    position: absolute;
+    top: 1.4rem;
+    white-space: nowrap;
+    color: var(--color-ink);
+  }
+  .hero-wipe-l {
+    right: 14px;
+  }
+  .hero-wipe-r {
+    left: 14px;
+  }
+  .hero-cue {
+    display: none;
+    text-align: right;
+  }
+  .hero-cue-track {
+    position: relative;
+    margin: 0.7rem 0 0 auto;
+    width: 132px;
+    height: 1px;
+    background: rgb(241 240 236 / 0.22);
+  }
+  .hero-cue-track i {
+    position: absolute;
+    left: 0;
+    top: -0.5px;
+    height: 2px;
+    width: calc(var(--p, 0) * 100%);
+    background: var(--color-ink);
+  }
+  /* The name as type: the fallback, large, above the rest of the copy. */
+  .hero-name {
+    margin-bottom: 1.5rem;
+    font-size: clamp(3.75rem, 12vw, 9rem);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+  }
+  /* While the 3D scene is the name, keep the <h1> for screen readers only. `.no-3d` brings it back. */
+  :global(html.js) .hero-stage:not(.no-3d) .hero-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .hero-stage canvas {
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  .hero-stage.is-live canvas {
+    opacity: 1;
+  }
+  .hero-stage.no-3d canvas,
+  .hero-stage.no-3d .hero-wipe,
+  .hero-stage.no-3d .hero-cue,
+  .hero-stage:not(.is-live) .hero-cue {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .hero-stage.is-live .hero-cue {
+      display: block;
+    }
+  }
+</style>
+
+<script>
+  let stop: (() => void) | null = null;
+  let token = 0;
+
+  async function boot() {
+    stop?.();
+    stop = null;
+    const mine = ++token;
+    const stage = document.querySelector<HTMLElement>('[data-hero]');
+    if (!stage) return;
+    const fail = () => stage.classList.add('no-3d');
+    // If the scene is not on screen after a few seconds (slow network, a stalled GPU), show the name as type.
+    const timer = setTimeout(() => !stage.classList.contains('is-live') && fail(), 6000);
+    try {
+      const probe = document.createElement('canvas');
+      if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw new Error('WebGL is not available');
+      const { start } = await import('../lib/hero-studio.js');
+      if (mine !== token || !stage.isConnected) return; // the visitor has already left the page
+      // In development, ?split=45 holds the wipe at 45% so a still can be checked.
+      const forced = import.meta.env.DEV ? new URLSearchParams(location.search).get('split') : null;
+      stop = start(stage, {
+        reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        coarse: matchMedia('(pointer: coarse)').matches,
+        forcedSplit: forced != null ? Number(forced) / 100 : null,
+        onLive: () => {
+          clearTimeout(timer);
+          stage.classList.remove('no-3d');
+          stage.classList.add('is-live');
+        },
+      });
+    } catch (error) {
+      clearTimeout(timer);
+      fail();
+      console.warn('The 3D opening could not start:', error);
+    }
+  }
+
+  document.addEventListener('astro:page-load', boot);
+  document.addEventListener('astro:before-swap', () => {
+    token++;
+    stop?.();
+    stop = null;
+  });
+</script>

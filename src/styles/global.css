@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #070809;
-  --color-surface: #101215;
+  --color-bg: #08090a;
+  --color-surface: #0f1113;
   --color-line: rgb(255 255 255 / 0.09);
   --color-ink: #f2f0ec;
   --color-muted: #8d9096;
-  --color-accent: #62e6d3;
+  /* The light blue of the Bugatti Tourbillon. Project pages set their own. */
+  --color-accent: #8db4d8;
   /* Accent for the automotive specialization. */
   --color-focus: #ff5a1f;
   --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
@@ -56,6 +57,16 @@
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  /* Small labels (categories, spec sheets, the opening): Instrument Sans in its narrow width, in capitals. */
+  .label {
+    font-size: 12px;
+    font-weight: 600;
+    font-stretch: 82%;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
     text-transform: uppercase;
     color: var(--color-muted);
   }
@@ -136,3 +147,220 @@
   }
 }
 
+/* ---------- Project cards: 3D objects ----------
+   A card tilts toward the cursor (the script in Base.astro sets --rx, --ry, --px and --py), the picture shifts
+   behind its frame, and labels float above it. When the cursor arrives, one soft beam of light glides across. */
+@layer components {
+  .project-card {
+    --rx: 0deg;
+    --ry: 0deg;
+    --px: 0;
+    --py: 0;
+    perspective: 1100px;
+  }
+  .card-body {
+    display: block;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .project-card.is-tilting .card-body {
+    transition-duration: 0.14s;
+    transition-timing-function: linear;
+  }
+  .card-frame {
+    position: relative;
+    transform-style: preserve-3d;
+  }
+  .card-shot {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: var(--color-surface);
+    box-shadow:
+      0 0 0 1px var(--color-line),
+      0 18px 36px -26px rgb(0 0 0 / 0.9);
+    transition: box-shadow 0.5s;
+  }
+  .project-card:hover .card-shot {
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.17),
+      0 44px 70px -34px rgb(0 0 0 / 0.95);
+  }
+  /* The picture is a little larger than its frame, so it can shift behind it. */
+  .card-pic {
+    transform: scale(1.07) translate3d(calc(var(--px) * -1.6%), calc(var(--py) * -1.6%), 0);
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .card-beam {
+    position: absolute;
+    top: -25%;
+    bottom: -25%;
+    left: 0;
+    width: 46%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    transform: translateX(-170%) skewX(-18deg);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(255 255 255 / 0.03) 22%,
+      rgb(255 255 255 / 0.13) 44%,
+      rgb(255 255 255 / 0.26) 50%,
+      rgb(255 255 255 / 0.13) 56%,
+      rgb(255 255 255 / 0.03) 78%,
+      transparent 100%
+    );
+  }
+  @media (hover: hover) {
+    .project-card:hover .card-beam {
+      transform: translateX(300%) skewX(-18deg);
+      transition: transform 1.35s cubic-bezier(0.3, 0.6, 0.3, 1);
+    }
+  }
+  /* Labels and the award laurel float above the picture. */
+  .card-float {
+    transform: translateZ(38px);
+  }
+  .card-meta {
+    transform: translateZ(14px);
+  }
+  /* The portrait on the About page tilts the same way. */
+  .tilt-portrait {
+    --rx: 0deg;
+    --ry: 0deg;
+    perspective: 1100px;
+  }
+  .tilt-portrait img {
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    box-shadow: 0 30px 60px -36px rgb(0 0 0 / 0.95);
+  }
+  .tilt-portrait.is-tilting img {
+    transition-duration: 0.14s;
+    transition-timing-function: linear;
+  }
+
+  /* ---------- Sections come up from dark as they enter the screen ----------
+     Only when JavaScript is running (html.js), so nothing is hidden without it. */
+  html.js [data-reveal] {
+    opacity: 0;
+    filter: brightness(0.35);
+    transition:
+      opacity 0.9s ease,
+      filter 1.1s ease;
+  }
+  html.js [data-reveal].is-in {
+    opacity: 1;
+    filter: none;
+  }
+
+  /* ---------- The cursor: a dot, and a ring that follows a beat behind ----------
+     Only for a mouse or trackpad. The script in Base.astro adds html.custom-cursor on the first move. */
+  .cur-dot,
+  .cur-ring {
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    html.custom-cursor,
+    html.custom-cursor * {
+      cursor: none !important;
+    }
+    .cur-dot,
+    .cur-ring {
+      display: block;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 60;
+      pointer-events: none;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.25s;
+      will-change: transform;
+    }
+    html.custom-cursor .cur-dot,
+    html.custom-cursor .cur-ring {
+      opacity: 1;
+    }
+    html.custom-cursor .cur-dot.is-away,
+    html.custom-cursor .cur-ring.is-away {
+      opacity: 0;
+    }
+    .cur-dot {
+      width: 6px;
+      height: 6px;
+      margin: -3px 0 0 -3px;
+      background: #fff;
+      mix-blend-mode: difference;
+    }
+    .cur-ring {
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+    }
+    .cur-ring i {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgb(241 240 236 / 0.55);
+      border-radius: 50%;
+      transition:
+        inset 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+        background-color 0.3s,
+        border-color 0.3s;
+    }
+    .cur-ring span {
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 600;
+      font-stretch: 82%;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-ink);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    /* Over a project card: the ring opens into a label. */
+    .cur-ring.on-card i {
+      inset: -22px;
+      border-color: rgb(241 240 236 / 0.4);
+      background: rgb(8 9 10 / 0.5);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    .cur-ring.on-card span {
+      opacity: 1;
+    }
+    /* Over a button or link: the ring tightens around the dot. */
+    .cur-ring.on-link i {
+      inset: -8px;
+      border-color: rgb(241 240 236 / 0.8);
+      background: rgb(241 240 236 / 0.12);
+    }
+    /* Over the homepage opening the cursor is the key light, so the ring becomes a pool of warm light. */
+    .cur-ring.on-light i {
+      inset: -44px;
+      border-color: rgb(241 240 236 / 0.18);
+      background: radial-gradient(circle, rgb(255 240 220 / 0.17) 0%, rgb(255 240 220 / 0.05) 48%, transparent 70%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-body,
+    .card-pic,
+    .tilt-portrait img {
+      transition: none;
+    }
+    .project-card:hover .card-beam {
+      transform: translateX(-170%) skewX(-18deg);
+      transition: none;
+    }
+    html.js [data-reveal] {
+      opacity: 1;
+      filter: none;
+      transition: none;
+    }
+  }
+}
