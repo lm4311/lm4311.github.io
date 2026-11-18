@@ -283,6 +283,7 @@
     html.custom-cursor .cur-ring {
       opacity: 1;
     }
+    html.custom-cursor .cur-dot.is-label,
     html.custom-cursor .cur-dot.is-away,
     html.custom-cursor .cur-ring.is-away {
       opacity: 0;

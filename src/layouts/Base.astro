@@ -95,6 +95,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
           cursor.ring.classList.toggle('on-light', !card && !link && !!light);
           cursor.ring.classList.toggle('is-away', away);
           cursor.dot.classList.toggle('is-away', away);
+          cursor.dot.classList.toggle('is-label', !!card); // the ring's word takes the dot's place
           if (card) cursor.ring.querySelector('span')!.textContent = card.getAttribute('data-cursor');
         },
         { passive: true },
