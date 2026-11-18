@@ -103,56 +103,62 @@ export function start(stage, options = {}) {
   const wallFinal = keep(new THREE.MeshStandardMaterial({ color: 0x14171b, roughness: 0.75, side: THREE.DoubleSide }));
   const wall = new THREE.Mesh(wallGeo, wallFinal); wall.position.y = 0.002; wall.receiveShadow = true; scene.add(wall);
 
-  // The final floor: polished, so it mirrors the name. The reflection is sharp where the letters stand, then
-  // softens and fades toward the camera, in the mirror's own shader (three 0.128 does not draw transparent
-  // layers over a mirror).
-  // The softening reads smaller copies of the mirror image that the graphics card makes itself (mipmaps), which
-  // is smooth at any strength. (Spreading a few samples wide apart, as before, drew every bright edge several
-  // times over: a fan of lines under each letter.) Those copies need a power-of-two picture size.
-  const mirrorSize = coarse ? 1024 : 2048;
-  const mirror = new Reflector(floorGeo, {
-    textureWidth: mirrorSize,
-    textureHeight: mirrorSize,
-    color: 0xffffff,
-    clipBias: 0.003,
-    shader: {
-      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, reach: { value: 7 } },
-      vertexShader: `
-        uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vWorld;
-        void main() {
-          vUv = textureMatrix * vec4(position, 1.0);
-          vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }`,
-      fragmentShader: `
-        uniform vec3 color; uniform sampler2D tDiffuse; uniform float reach; varying vec4 vUv; varying vec3 vWorld;
-        void main() {
-          vec2 uv = vUv.xy / vUv.w;
+  // The final floor: the same dark surface as the wall, polished. Two things make it up.
+  // 1. The surface itself, an ordinary material: it takes the studio's light and the shadow of the name, exactly
+  //    as the wall does, so the shadow runs unbroken from the foot of the letters across the floor and up the wall.
+  // 2. The polish: a mirror image of the scene (three's Reflector renders it), laid over that surface. It is sharp
+  //    where the letters stand, then softens and fades toward the camera.
+  // The Reflector is used for its mirror image only. Its own material shows nothing but that image, so it can
+  // take neither light nor shadow, which left the shadow cut off where the wall begins.
+  const mirrorSize = coarse ? 1024 : 2048; // a power of two: the softening below needs mipmaps
+  const mirror = new Reflector(floorGeo, { textureWidth: mirrorSize, textureHeight: mirrorSize, color: 0xffffff, clipBias: 0.003 });
+  const mirrorImage = mirror.getRenderTarget().texture;
+  const mirrorMatrix = mirror.material.uniforms.textureMatrix.value; // the Reflector keeps this up to date
+  mirror.material.dispose();
+  const polish = { reach: { value: 7 } };
+  const floorFinal = keep(new THREE.MeshStandardMaterial({ color: 0x14171b, roughness: 0.75 }));
+  floorFinal.onBeforeCompile = (shader) => {
+    shader.uniforms.tMirror = { value: mirrorImage };
+    shader.uniforms.mirrorMatrix = { value: mirrorMatrix };
+    shader.uniforms.reach = polish.reach;
+    shader.vertexShader = shader.vertexShader
+      .replace('void main() {', 'uniform mat4 mirrorMatrix; varying vec4 vMirror; varying vec3 vFloor;\nvoid main() {')
+      .replace('#include <project_vertex>', `#include <project_vertex>
+        vMirror = mirrorMatrix * vec4(position, 1.0);
+        vFloor = (modelMatrix * vec4(position, 1.0)).xyz;`);
+    shader.fragmentShader = shader.fragmentShader
+      .replace('void main() {', 'uniform sampler2D tMirror; uniform float reach; varying vec4 vMirror; varying vec3 vFloor;\nvoid main() {')
+      // After the tone curve: the mirror image arrives in screen values already (three renders it with the same
+      // tone curve as the main picture), so it is added as it is and the reflected letters keep their contrast.
+      .replace('#include <encodings_fragment>', `#include <encodings_fragment>
+        {
+          vec2 uv = vMirror.xy / vMirror.w;
           // 0 under the letters, 1 where the reflection has faded out. "reach" grows with the camera's distance:
           // on a narrow screen the camera stands far back and the reflection stretches further along the floor.
-          float d = clamp(vWorld.z / reach, 0.0, 1.0);
+          float d = clamp(vFloor.z / reach, 0.0, 1.0);
           // How soft, as a share of the picture's width. It is sized against the letters, so it shrinks as the
-          // camera stands further back.
+          // camera stands further back. The softening reads the smaller copies of the mirror image that the
+          // graphics card makes itself (mipmaps), which is smooth at any strength. (Spreading a few samples wide
+          // apart instead draws every bright edge several times over: a fan of lines under each letter.)
           float soft = 0.0052 * smoothstep(0.03, 0.8, d) * (7.0 / reach);
           float level = log2(max(soft * ${mirrorSize.toFixed(1)}, 1.0)); // which smaller copy holds that much softening
           // Nine readings close together take the blockiness out of the smaller copies.
           vec3 acc = vec3(0.0);
-          for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) acc += texture2D(tDiffuse, uv + vec2(float(i), float(j)) * soft * 0.55, level).rgb;
+          for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) acc += texture2D(tMirror, uv + vec2(float(i), float(j)) * soft * 0.55, level).rgb;
           acc /= 9.0;
-          // The mirror image arrives in screen values already (three renders it with the same tone curve as the
-          // main picture), so it is used as it is: the reflected letters keep the contrast of the real ones.
           float keep = mix(0.78, 0.0, smoothstep(0.0, 0.9, d));
-          float far = 1.0 - smoothstep(-1.0, -2.6, vWorld.z) * 0.25;
-          gl_FragColor = vec4(acc * color * keep * far + vec3(0.012, 0.014, 0.017), 1.0);
-        }`,
-    },
-  });
+          float far = 1.0 - smoothstep(-1.0, -2.6, vFloor.z) * 0.25;
+          gl_FragColor.rgb += acc * keep * far;
+        }`);
+  };
+  mirror.material = floorFinal;
+  mirror.receiveShadow = true;
   mirror.rotation.x = -Math.PI / 2; mirror.position.set(0, 0, 20); scene.add(mirror);
-  keep(mirror.material); keep(mirror.getRenderTarget());
+  keep(mirror.getRenderTarget());
   // Some phone GPUs cannot render into a three-channel picture; four channels work everywhere.
-  mirror.getRenderTarget().texture.format = THREE.RGBAFormat;
-  mirror.getRenderTarget().texture.generateMipmaps = true;
-  mirror.getRenderTarget().texture.minFilter = THREE.LinearMipmapLinearFilter;
+  mirrorImage.format = THREE.RGBAFormat;
+  mirrorImage.generateMipmaps = true;
+  mirrorImage.minFilter = THREE.LinearMipmapLinearFilter;
   // The mirror image is the name seen from under the floor. From there the paint would show a different part of
   // the studio, and the reflected letters would lose their horizon and highlight; a reflection that does not
   // match what stands above it reads as a mistake. So for the mirror's own render, the paint's studio is aimed
@@ -273,7 +279,7 @@ export function start(stage, options = {}) {
     const want = (h - (copy ? copy.offsetHeight : 0)) * (aspect < 1 ? 0.55 : 0.6);
     camera.setViewOffset(w, h, 0, Math.round(now - want), w, h);
     camera.updateProjectionMatrix();
-    mirror.material.uniforms.reach.value = dist * 0.6;
+    polish.reach.value = dist * 0.6;
     resized = true;
   };
   layout();
