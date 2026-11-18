@@ -67,17 +67,40 @@ const canonical = new URL(Astro.url.pathname, site.url);
         cursor.el.setAttribute('aria-hidden', 'true');
         cursor.el.innerHTML = '<i><span></span></i>';
         document.body.append(cursor.el);
+        shown = ''; // a new element: no shape on it yet
         if (cursor.seen) document.documentElement.classList.add('custom-cursor');
       }
       // Give the cursor the shape that suits what is under it, and hide the browser's cursor only while that shape
       // is really on screen. Everything that changes the cursor goes through here.
-      function suit(target: Element | null) {
+      let shown = ''; // the shape on screen now: 'on-card', 'on-link' or none
+      let closing = 0; // the timer that will close it
+      // How long the shape stays open with nothing under it, in milliseconds. The mouse crosses the gap between
+      // two cards, or between two links, in less than this: the shape then simply stays as it is and travels
+      // with the mouse, instead of closing and opening again within a frame or two (which is also more than
+      // Safari draws reliably: it could leave the disc unseen on the second card).
+      const HOLD = 120;
+      function suit(target: Element | null, atOnce = false) {
         const el = cursor.el?.isConnected ? cursor.el : null;
-        const card = target?.closest('[data-cursor]');
+        const card = target?.closest('[data-cursor]') ?? null;
         const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
         // An embedded video is another page: the browser's cursor shows inside it, so ours steps aside.
         const away = !cursor.inside || target instanceof HTMLIFrameElement;
         const shape = el && !away ? (card ? 'on-card' : link ? 'on-link' : '') : '';
+        // Nothing to interact with here, but there was a moment ago: wait before closing. (Not when the mouse
+        // has left the window or the page is changing: then the shape goes at once.)
+        if (shape === '' && shown !== '' && el && !away && !atOnce) {
+          closing ||= window.setTimeout(() => {
+            closing = 0;
+            draw('', null, false);
+          }, HOLD);
+          return;
+        }
+        clearTimeout(closing);
+        closing = 0;
+        draw(shape, card, away);
+      }
+      function draw(shape: string, card: Element | null, away: boolean) {
+        const el = cursor.el?.isConnected ? cursor.el : null;
         if (el) {
           el.classList.toggle('on-card', shape === 'on-card');
           el.classList.toggle('on-link', shape === 'on-link');
@@ -86,8 +109,9 @@ const canonical = new URL(Astro.url.pathname, site.url);
           const label = el.querySelector('span')!;
           if (card && label.textContent !== word) label.textContent = word;
         }
+        shown = el ? shape : '';
         // See html.cursor-shape in global.css.
-        document.documentElement.classList.toggle('cursor-shape', shape !== '');
+        document.documentElement.classList.toggle('cursor-shape', shown !== '');
       }
 
       // ---------- Hover that follows the cursor ----------
@@ -215,6 +239,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
       // A page change replaces everything under the cursor: forget the old page before it goes.
       document.addEventListener('astro:before-swap', () => {
         hover(null);
+        suit(null, true);
         cursor.el = null;
         document.documentElement.classList.remove('cursor-shape');
       });
@@ -267,7 +292,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
         // asking until the new page has finished fading in).
         hovered = [];
         hoverTarget = null;
-        suit(null);
+        suit(null, true);
         wake(); // put the new page's cursor element where the mouse is
         lookAgain();
         mountReveal();

@@ -599,17 +599,20 @@
       width: 0;
       height: 0;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.25s;
+      visibility: hidden;
       will-change: transform;
     }
     html.custom-cursor .cur {
-      opacity: 1;
+      visibility: visible;
     }
     html.custom-cursor .cur.is-away {
-      opacity: 0;
+      visibility: hidden;
     }
-    /* At rest the shape is closed and unseen: the browser's cursor is the cursor. */
+    /* At rest the shape is closed and unseen: the browser's cursor is the cursor.
+       The shape shows and hides through its colours and its size, never through `opacity`. Browsers hand an
+       opacity fade to the graphics card, and Safari can lose track of one that is turned round within a frame
+       or two (the mouse leaving one card and landing on the next): the disc then stays unseen although the
+       page says it is showing. Colours and sizes are drawn by the page itself and cannot go astray like that. */
     .cur i {
       position: absolute;
       left: 0;
@@ -621,16 +624,15 @@
       translate: -50% -50%;
       /* The word is cut to the disc, so it opens and closes with it and never hangs outside a small ring. */
       overflow: hidden;
-      border: 1px solid var(--color-ink);
+      border: 1px solid transparent;
       border-radius: 50%;
-      opacity: 0;
+      background: transparent;
       transition:
         width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
         height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
-        opacity 0.2s,
-        background-color 0.3s,
-        border-color 0.3s,
-        box-shadow 0.4s,
+        background-color 0.25s,
+        border-color 0.2s,
+        box-shadow 0.25s,
         scale 0.18s;
     }
     .cur span {
@@ -641,9 +643,8 @@
       letter-spacing: 0.2em;
       white-space: nowrap;
       text-transform: uppercase;
-      color: var(--color-ink);
-      opacity: 0;
-      transition: opacity 0.12s;
+      color: transparent;
+      transition: color 0.12s;
     }
     /* Pressed: it tightens a little. */
     .cur.is-down i {
@@ -658,7 +659,6 @@
       box-shadow:
         0 0 0 1px rgb(8 9 10 / 0.22),
         inset 0 0 0 1px rgb(8 9 10 / 0.18);
-      opacity: 1;
     }
     /* Over a project picture, a gallery picture or a slider: a frosted disc with a word. */
     .cur.on-card i {
@@ -667,15 +667,14 @@
       border-color: rgb(241 240 236 / 0.32);
       background: rgb(8 9 10 / 0.5);
       box-shadow: 0 14px 30px -14px rgb(0 0 0 / 0.7);
-      opacity: 1;
       -webkit-backdrop-filter: blur(10px) saturate(1.15);
       backdrop-filter: blur(10px) saturate(1.15);
     }
     /* The word comes with the disc, at once. (It used to wait a tenth of a second and then fade in slowly, and
        every quick move from one picture to the next started that wait again: the disc stayed empty.) */
     .cur.on-card span {
-      opacity: 1;
-      transition: opacity 0.14s;
+      color: var(--color-ink);
+      transition: color 0.14s;
     }
   }
 
