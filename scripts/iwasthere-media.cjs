@@ -9,7 +9,7 @@
 //              GitHub's 100 MB file limit: public/media/iwasthere/playthrough.mp4 (+ playthrough.jpg poster).
 // Clips:       silent 1280 px H.264 loops, one per gameplay beat in play order, each with a JPG poster.
 //              chase.mp4 is also the homepage card loop.
-// Stills:      cover.webp (the start menu, for the card) in public/media/iwasthere/, and the level-design map
+// Stills:      cover.webp (the shipwreck shot just before the credits, for the card) in public/media/iwasthere/, and the level-design map
 //              (posted by Winsey Wu in the team Discord, 30 Jan 2026) in src/assets/work/iwasthere/.
 // Needs ffmpeg with libx264: on the PATH, or set FFMPEG to the full path of ffmpeg.exe.
 // Sources (not changed): SOURCE below (3840x2088, 30 fps), and MAP.
@@ -59,7 +59,7 @@ async function poster(at, out, width) {
   for (const d of [mediaDir, imgDir]) fs.mkdirSync(d, { recursive: true });
 
   if (want('stills')) {
-    await poster(8, path.join(mediaDir, 'cover.webp'), 1600);
+    await poster(673.6, path.join(mediaDir, 'cover.webp'), 1600); // the shipwreck, just before the credits
     console.log(`cover.webp: ${kb(fs.statSync(path.join(mediaDir, 'cover.webp')).size)}`);
     if (MAP) {
       // The screenshot (687x749) holds two maps over a dark background, stacked with an empty corner. Cut each one
