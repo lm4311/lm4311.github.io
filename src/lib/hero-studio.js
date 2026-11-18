@@ -63,7 +63,9 @@ export function start(stage, options = {}) {
   // A dark studio with soft boxes far brighter than white (the clear coat on paint reflects only a few percent of
   // what is in front of it, so only very bright lights show up crisply in it, as on a real car).
   const envScene = new THREE.Scene();
-  envScene.background = new THREE.Color(0x010102);
+  // The room around the lights: a dark, neutral shell. (Not scene.background: a plain background colour comes out
+  // of the reflection map many times brighter than it is set, and puts a flat coloured outline on every edge.)
+  envScene.add(new THREE.Mesh(keep(new THREE.SphereGeometry(40, 24, 16)), keep(new THREE.MeshBasicMaterial({ color: 0x15171a, side: THREE.BackSide }))));
   const box = (w, h, x, y, z, colour, power = 1) => {
     const material = keep(new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide }));
     material.color.multiplyScalar(power);
@@ -73,11 +75,11 @@ export function start(stage, options = {}) {
   box(16, 2.6, 0, 8.5, 2.5, 0xffffff, 9); // overhead soft box: the long highlight along the tops of the letters
   box(1.1, 9, -9.5, 2.5, 1, 0xd6e4ff, 7); // left strip: catches the rounded edges on the left
   box(1.1, 9, 9.5, 2.5, -1, 0xffffff, 7); // right strip
-  box(24, 1.0, 0, 0.6, -9, 0x6f8fb5, 1.2); // horizon glow behind the name
+  box(24, 1.0, 0, 0.6, -9, 0xb2b8c0, 0.8); // horizon glow behind the name
   // Behind the camera: a dim glow, so the faces are never black. The sharp reflections on the faces (the horizon
   // and the strip light) are drawn by the paint itself, below: a reflection map this size is too coarse to hold a
   // crisp line across a flat letter, which only looks at a few degrees of the room.
-  box(46, 14, 0, 4, 13, 0x8d97a3, 0.16);
+  box(46, 14, 0, 4, 13, 0x8d97a3, 0.05);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTarget = keep(pmrem.fromScene(envScene, 0.012));
   const env = envTarget.texture;
@@ -146,13 +148,13 @@ export function start(stage, options = {}) {
   const S = 1.3 / G.cap; // capital letters are 1.3 units tall
   const W = G.width * S;
   const clay = keep(new THREE.MeshStandardMaterial({ color: 0xc9c9c6, roughness: 0.9 }));
-  // Car paint, in two layers as on a car. Underneath, a metallic base coat in deep blue, smooth enough to mirror
-  // the studio, so the reflections come back tinted with the paint's colour. On top, a clear coat: perfectly
-  // smooth, adding the small white highlights of the lights themselves.
+  // Car paint in gloss black, in two layers as on a car. Underneath, a black base coat. On top, a clear coat:
+  // perfectly smooth, which is where every reflection comes from. Black paint shows no colour of its own, only
+  // the room, so the reflections are the neutral greys and whites of the studio.
   // (No flake texture: at this size it only reads as grain, and any bumpiness makes the renderer blur the
   // reflections, which is the opposite of a polished finish.)
   const paint = keep(new THREE.MeshPhysicalMaterial({
-    color: 0x1450b4, metalness: 1, roughness: 0.06,
+    color: 0x040506, metalness: 0, roughness: 0.08, reflectivity: 1,
     clearcoat: 1, clearcoatRoughness: 0.02,
     envMap: env, envMapIntensity: 1.0,
   }));
@@ -162,7 +164,7 @@ export function start(stage, options = {}) {
   // name: what the side of a car shows in a studio. On the rounded edges the same lights wrap into fine glints.
   // Heights are given on the letters (0 = the floor, 1.3 = the top of a capital); frame() turns them into the
   // slopes the shader compares against, which depend on where the camera is.
-  const REFLECT = { horizon: 0.46, strip: 0.8, edge: 0.022, fade: 1.0 };
+  const REFLECT = { horizon: 0.46, strip: 0.8, edge: 0.022, fade: 0.7 };
   const studio = { horizon: { value: 0 }, strip: { value: 0 }, edge: { value: 0.001 }, fade: { value: 0.1 }, on: { value: 0 } };
   paint.onBeforeCompile = (shader) => {
     shader.uniforms.uHorizon = studio.horizon;
@@ -183,12 +185,12 @@ export function start(stage, options = {}) {
           // The wall of light: strongest just above the horizon, falling away toward the top of the letters.
           float wall = above * mix(1.0, 0.16, smoothstep(0.0, 1.0, (slope - uHorizon) / uFade));
           // The floor: dark, lifting slightly as it nears the horizon.
-          float ground = (1.0 - above) * 0.13 * smoothstep(-uFade * 0.55, 0.0, slope - uHorizon);
+          float ground = (1.0 - above) * 0.10 * smoothstep(-uFade * 0.55, 0.0, slope - uHorizon);
           // The strip light: a fine core with a soft glow around it.
           float away = abs(slope - uStrip) / uEdge;
           float strip = (1.0 - smoothstep(0.3, 1.0, away)) + 0.22 * exp(-away * away * 0.09);
-          // The base coat tints what it mirrors; the clear coat adds a little of the strip light untinted.
-          reflectedLight.indirectSpecular += uOn * toward * (material.specularColor * ((wall + ground) * 0.9 + strip * 6.5) + vec3(strip * 0.42));
+          // Black paint mirrors the room in its own tones: a cool grey for the wall, white for the strip light.
+          reflectedLight.indirectSpecular += uOn * toward * (vec3(0.78, 0.83, 0.92) * (wall + ground) * 0.11 + vec3(strip * 0.9));
         }`);
   };
   const name = new THREE.Group();
