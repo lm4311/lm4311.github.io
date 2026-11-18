@@ -15,7 +15,7 @@ export const site = {
   url: 'https://lm4311.github.io',
   links: {
     // Add the full profile address, e.g. 'https://www.linkedin.com/in/...'. Empty hides the LinkedIn buttons.
-    linkedin: '',
+    linkedin: 'https://www.linkedin.com/in/lejia-mu',
   },
   // The résumé is public/resume.pdf (currently the October 2025 version). Replace that file to update it.
   resume: '/resume.pdf',
