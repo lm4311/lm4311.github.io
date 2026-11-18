@@ -11,12 +11,13 @@ export const site = {
   description:
     'Portfolio of Luke Mu, an XR creative technologist, designer and developer working in Unreal Engine: co-located multiplayer VR, product visualization and film, motion capture and games.',
   // Leave any of the next four empty ('') to hide its button and link across the site.
-  email: 'hello@example.com',
+  email: 'mulejia@gmail.com',
   url: 'https://lm4311.github.io',
   links: {
-    linkedin: 'https://www.linkedin.com/in/your-handle',
+    // Add the full profile address, e.g. 'https://www.linkedin.com/in/...'. Empty hides the LinkedIn buttons.
+    linkedin: '',
   },
-  // Replace public/resume.pdf with your résumé.
+  // The résumé is public/resume.pdf (currently the October 2025 version). Replace that file to update it.
   resume: '/resume.pdf',
   // A portrait for the About page: put the image in public/ and give its path, e.g. '/portrait.webp'.
   portrait: '',
@@ -128,4 +129,11 @@ export const experience = [
 ];
 
 // Leave empty to hide the Education column on the About page.
-export const education: { when: string; degree: string; school: string }[] = [];
+export const education: { when: string; degree: string; school: string }[] = [
+  { when: 'Expected May 2027', degree: 'Master of Science, Integrated Design & Media', school: 'New York University' },
+  {
+    when: 'May 2025',
+    degree: 'Honours Bachelor of Arts, New Media Studies and Economics for Management Studies',
+    school: 'University of Toronto',
+  },
+];
