@@ -8,8 +8,14 @@
 //   replaced by matte grey clay. Each frame is drawn in two passes, one per side of the divider.
 //
 // On a phone or tablet (a touch screen, no cursor to move the light) nothing in the scene changes once the lights
-// are on, so it is drawn once in each version and kept as two still pictures. Scrolling then only moves a clip
-// edge between them, which costs almost nothing, instead of drawing the 3D scene twice on every frame.
+// are on, so it is drawn once in each version and kept as two still pictures. Scrolling then only slides one
+// picture across the other, which costs almost nothing, instead of drawing the 3D scene twice on every frame.
+//
+// The divider must move as smoothly as the page does:
+// - With stills, where the browser supports scroll-driven animations (CSS in HeroStudio.astro), the browser itself
+//   moves the divider with the scroll, in step with it, without any script.
+// - Otherwise the divider glides toward where the scroll says it should be, a little each frame, so a stepped
+//   scroll (a mouse wheel, late scroll events on a phone) still reads as one continuous movement.
 //
 // Loaded on demand by HeroStudio.astro, so three.js is only fetched on the homepage, after the text is on screen.
 // three is pinned to 0.128.0: the look was tuned against that version's lights and materials.
@@ -219,10 +225,12 @@ export function start(stage, options = {}) {
     tx = ((e.clientX - r.left) / r.width) * 2 - 1; ty = 1 - ((e.clientY - r.top) / r.height) * 2; lastMove = performance.now();
   };
   stage.addEventListener('pointermove', onMove);
+  const stickTop = parseFloat(getComputedStyle(stage).top) || 0; // where the sticky frame rests: under the navigation bar
   const progress = () => {
     if (forcedSplit != null) return forcedSplit;
+    // 0 when the frame starts to stay in place (its top meets the navigation bar), 1 when it lets go.
     const travel = pin.offsetHeight - stage.offsetHeight;
-    return travel > 0 ? Math.min(1, Math.max(0, -pin.getBoundingClientRect().top / travel)) : 0;
+    return travel > 0 ? Math.min(1, Math.max(0, (stickTop - pin.getBoundingClientRect().top) / travel)) : 0;
   };
 
   let visible = true;
@@ -242,19 +250,27 @@ export function start(stage, options = {}) {
     const level = { rim: ease((t - 0.3) / 0.8), wash: ease((t - 0.9) / 0.8), key: ease((t - 1.5) / 0.9) };
     for (const light of lights) light.intensity = light.userData.level * level[light.userData.group];
   };
-  // Where the divider is: the share of the frame, from the left, that is lighting only.
-  const placeDivider = () => {
-    const split = ease((progress() - 0.03) / 0.9);
-    const w = stage.clientWidth, sx = Math.round(w * split);
-    if (wipe) { wipe.style.transform = `translateX(${sx}px)`; wipe.style.opacity = split > 0.002 && split < 0.998 ? '1' : '0'; }
-    if (cue) cue.style.setProperty('--p', split.toFixed(3));
-    stage.style.setProperty('--split', split.toFixed(4));
-    return sx;
+  // Where the divider should be: the share of the frame, from the left, that is lighting only.
+  const wanted = () => ease((progress() - 0.03) / 0.9);
+  // Where it is drawn. It glides toward the wanted place, closing most of the gap every `ms` milliseconds
+  // whatever the frame rate (0 = jump straight there).
+  let shown = wanted(), glidedAt = performance.now();
+  const glide = (ms) => {
+    const target = wanted(), now = performance.now();
+    const settle = ms > 0 ? 1 - Math.exp(-(now - glidedAt) / ms) : 1;
+    glidedAt = now;
+    shown += (target - shown) * settle;
+    if (Math.abs(target - shown) < 0.0004) shown = target;
+    stage.style.setProperty('--split', shown.toFixed(4));
+    stage.style.setProperty('--wipe-on', shown > 0.002 && shown < 0.998 ? '1' : '0');
+    return shown !== target; // still moving
   };
 
-  // ---- Touch screens: once the lights are on, keep two still pictures and let the scroll move a clip edge. ----
+  // ---- Touch screens: once the lights are on, keep two still pictures and let the scroll slide one across. ----
   const stills = coarse && !!still;
-  let frozen = false, scrollTick = false;
+  // The browser can tie an animation to the scroll position itself (see "Scroll-driven" in HeroStudio.astro).
+  const scrollDriven = stills && forcedSplit == null && typeof CSS !== 'undefined' && CSS.supports('animation-timeline: view()');
+  let frozen = false, gliding = false;
   const freeze = () => {
     const w = stage.clientWidth, h = stage.clientHeight;
     drawLights(99);
@@ -268,13 +284,21 @@ export function start(stage, options = {}) {
     still.getContext('2d').drawImage(canvas, 0, 0);
     pass(true, 0, w, h);
     stage.classList.add('is-still');
+    if (scrollDriven) stage.classList.add('is-scroll-driven');
     frozen = true; resized = false;
-    placeDivider();
+    glide(0);
   };
+  // Without scroll-driven animations: each scroll event starts a short glide that runs until the divider arrives.
   const onScroll = () => {
-    if (!frozen || scrollTick) return;
-    scrollTick = true;
-    requestAnimationFrame(() => { scrollTick = false; placeDivider(); });
+    if (!frozen || gliding || scrollDriven) return;
+    gliding = true;
+    glidedAt = performance.now();
+    const step = () => {
+      if (stopped) return;
+      if (glide(reduced ? 0 : 70)) requestAnimationFrame(step);
+      else gliding = false;
+    };
+    requestAnimationFrame(step);
   };
   if (stills) addEventListener('scroll', onScroll, { passive: true });
 
@@ -299,7 +323,9 @@ export function start(stage, options = {}) {
     camera.position.set(reduced || stills ? 0 : px * 0.55, 0.78 + (reduced || stills ? 0 : py * 0.08), dist);
     camera.lookAt(0, 0.02, 0);
 
-    const w = stage.clientWidth, h = stage.clientHeight, sx = placeDivider();
+    // The first frame starts in place; after that the divider glides.
+    glide(reduced || !live || forcedSplit != null ? 0 : 95);
+    const w = stage.clientWidth, h = stage.clientHeight, sx = Math.round(w * shown);
     renderer.setScissorTest(true);
     if (sx > 0) pass(false, 0, sx, h);
     if (sx < w) pass(true, sx, w - sx, h);
