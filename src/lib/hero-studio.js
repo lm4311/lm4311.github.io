@@ -44,8 +44,11 @@ export function start(stage, options = {}) {
   const still = stage.querySelector('[data-hero-still]'); // holds the lighting-only picture on touch screens
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  // Phones have very dense screens; 1.5x is sharp enough there and nearly halves the pixels to shade.
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
+  // Phones have very dense screens (often 3x). The two-second light-up is drawn at up to 2x to keep it smooth;
+  // the still pictures kept after it are drawn once, so they get the screen's full density (see freeze()).
+  // Drawn at less than that, the browser stretches the picture and the letters' edges turn stepped and soft.
+  const density = window.devicePixelRatio || 1;
+  renderer.setPixelRatio(Math.min(density, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -363,6 +366,7 @@ export function start(stage, options = {}) {
   let frozen = false, gliding = false;
   const freeze = () => {
     const w = stage.clientWidth, h = stage.clientHeight;
+    if (renderer.getPixelRatio() !== Math.min(density, 3)) renderer.setPixelRatio(Math.min(density, 3));
     drawLights(99);
     key.position.set(px * 6.5, 3.2 + (py + 1) * 1.3, 7);
     camera.position.set(0, 0.78, dist); camera.lookAt(0, 0.02, 0);
