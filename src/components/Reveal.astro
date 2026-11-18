@@ -40,6 +40,7 @@ const pairs = await Promise.all(
           class="relative overflow-hidden rounded-xl border border-line bg-surface select-none"
           style={`aspect-ratio: ${p.ratio}; --pos: 50%`}
           data-reveal
+          data-cursor="Drag"
         >
           {[
             { img: p.left, label: beforeLabel, clip: undefined },

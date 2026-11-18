@@ -10,7 +10,7 @@ const { steps, caption } = Astro.props;
 ---
 
 <figure class="breakout not-prose">
-  <ol class="my-0 flex list-none flex-col items-stretch gap-2 rounded-2xl border border-line p-4 sm:p-6 lg:flex-row lg:items-center">
+  <ol class="my-0 flex list-none flex-col items-stretch gap-2 rounded-2xl border border-line p-4 sm:p-6 lg:flex-row lg:items-stretch">
     {
       steps.map((s, i) => (
         <>
@@ -29,5 +29,5 @@ const { steps, caption } = Astro.props;
       ))
     }
   </ol>
-  {caption && <figcaption class="mt-3 text-sm text-muted">{caption}</figcaption>}
+  {caption && <figcaption class="caption mt-3">{caption}</figcaption>}
 </figure>

@@ -28,7 +28,7 @@ const {
 ---
 
 <figure class="breakout not-prose" data-compare>
-  <div class="relative overflow-hidden rounded-2xl border border-line select-none" style={`aspect-ratio: ${aspect}; --pos: 50%`}>
+  <div class="relative overflow-hidden rounded-2xl border border-line select-none" style={`aspect-ratio: ${aspect}; --pos: 50%`} data-cursor="Drag">
     <Cover seed={seed} accent="var(--color-accent)" motif={motif} poster={beforeSrc} alt={before} clay={!beforeSrc} class="absolute inset-0" />
     <div class="absolute inset-0" style="clip-path: inset(0 0 0 var(--pos))">
       <Cover seed={seed} accent="var(--color-accent)" motif={motif} poster={afterSrc} alt={after} class="absolute inset-0" />
@@ -49,7 +49,7 @@ const {
       class="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
     />
   </div>
-  {caption && <figcaption class="hud mt-3">{caption}</figcaption>}
+  {caption && <figcaption class="caption mt-3">{caption}</figcaption>}
 </figure>
 
 <script>

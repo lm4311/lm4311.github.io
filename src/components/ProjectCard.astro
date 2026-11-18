@@ -11,19 +11,21 @@ import { groupLabel } from '../data/site';
 
 interface Props {
   project: CollectionEntry<'work'>;
+  /** Let the picture grow into the project page's top media when opened (off for the cards under a project page). */
+  morph?: boolean;
 }
 
-const { project } = Astro.props;
+const { project, morph = true } = Astro.props;
 const { title, summary, category, tags, accent, motif, video, poster, placeholder, inDevelopment, award } = project.data;
 const Wrap = inDevelopment ? 'div' : 'a';
 ---
 
 <!-- data-cursor is the word the cursor's ring shows over this card. -->
-<article class="project-card group" data-tilt data-reveal data-cursor={inDevelopment ? 'Soon' : 'View'}>
+<article class="project-card group" data-tilt data-rise data-cursor={inDevelopment ? 'Soon' : 'View'}>
   <Wrap href={inDevelopment ? undefined : `/work/${project.id}/`} class="card-body">
     <div class="card-frame">
       <!-- The picture grows into the project page's top media when the card is opened. -->
-      <div class="card-shot" transition:name={inDevelopment ? undefined : `cover-${project.id}`}>
+      <div class="card-shot" transition:name={inDevelopment || !morph ? undefined : `cover-${project.id}`}>
         <Cover seed={title} accent={accent} motif={motif} video={video} poster={poster} alt="" class="card-pic aspect-video" />
         <span class="card-beam" aria-hidden="true"></span>
       </div>

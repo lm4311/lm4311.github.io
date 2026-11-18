@@ -18,7 +18,7 @@ const games = projects.filter((p) => p.data.category === 'games' && !p.data.feat
 
   <!-- Featured work -->
   <section id="work" class="container-x scroll-mt-20 border-t border-line py-16 sm:py-20">
-    <h2 class="font-display text-3xl sm:text-4xl" data-reveal>Featured work</h2>
+    <h2 class="font-display text-3xl sm:text-4xl" data-rise>Featured work</h2>
     <div class="mt-10 grid gap-x-10 gap-y-16 md:grid-cols-2">
       {featured.map((project) => <ProjectCard project={project} />)}
     </div>
@@ -28,7 +28,7 @@ const games = projects.filter((p) => p.data.category === 'games' && !p.data.feat
   {
     mocap.length > 0 && (
       <section id="mocap" class="container-x scroll-mt-20 border-t border-line py-16 sm:py-20">
-        <h2 class="font-display text-3xl sm:text-4xl" data-reveal>{groupLabel.mocap}</h2>
+        <h2 class="font-display text-3xl sm:text-4xl" data-rise>{groupLabel.mocap}</h2>
         <div class="mt-10 grid gap-x-10 gap-y-16 md:grid-cols-2">
           {mocap.map((project) => (
             <ProjectCard project={project} />
@@ -42,7 +42,7 @@ const games = projects.filter((p) => p.data.category === 'games' && !p.data.feat
   {
     games.length > 0 && (
       <section id="games" class="container-x scroll-mt-20 border-t border-line py-16 sm:py-20">
-        <h2 class="font-display text-3xl sm:text-4xl" data-reveal>{groupLabel.games}</h2>
+        <h2 class="font-display text-3xl sm:text-4xl" data-rise>{groupLabel.games}</h2>
         <div class="mt-10 grid gap-x-10 gap-y-16 md:grid-cols-2">
           {games.map((project) => (
             <ProjectCard project={project} />
@@ -54,7 +54,7 @@ const games = projects.filter((p) => p.data.category === 'games' && !p.data.feat
 
   <!-- Brief introduction and contact -->
   <section id="contact" class="container-x scroll-mt-20 border-t border-line py-16 sm:py-20">
-    <div class="grid gap-12 lg:grid-cols-2 lg:gap-20" data-reveal>
+    <div class="grid gap-12 lg:grid-cols-2 lg:gap-20" data-rise>
       <div>
         <h2 class="font-display text-3xl sm:text-4xl">About me</h2>
         <p class="mt-5 max-w-xl text-lg leading-8 text-ink/85">{homeAbout}</p>

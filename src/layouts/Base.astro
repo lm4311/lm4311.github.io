@@ -109,6 +109,10 @@ const canonical = new URL(Astro.url.pathname, site.url);
       (function follow() {
         requestAnimationFrame(follow);
         if (!cursor.ring || !cursor.dot || !cursor.seen) return;
+        // A dialog (the image viewer) opens in the browser's top layer, above the rest of the page,
+        // so while one is open the cursor lives inside it.
+        const host = document.querySelector('dialog[open]') ?? document.body;
+        if (cursor.ring.parentElement !== host) host.append(cursor.ring, cursor.dot);
         const k = reduced.matches ? 1 : 0.17;
         cursor.rx += (cursor.x - cursor.rx) * k;
         cursor.ry += (cursor.y - cursor.ry) * k;
@@ -142,9 +146,9 @@ const canonical = new URL(Astro.url.pathname, site.url);
         });
       }
 
-      // ---------- Sections come up from dark as they enter the screen ([data-reveal]) ----------
+      // ---------- Sections come up from dark as they enter the screen ([data-rise]) ----------
       function mountReveal() {
-        const items = document.querySelectorAll<HTMLElement>('[data-reveal]');
+        const items = document.querySelectorAll<HTMLElement>('[data-rise]');
         if (!items.length) return;
         const seen = new IntersectionObserver(
           (entries) => {

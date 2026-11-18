@@ -50,9 +50,10 @@ const boards = await Promise.all(
           href={b.big}
           target="_blank"
           rel="noopener"
-          class="group block overflow-hidden rounded-xl border border-line bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          class="beam-host group relative block overflow-hidden rounded-xl border border-line bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           style={`aspect-ratio: ${b.ratio}`}
           data-board
+          data-cursor="Open"
           data-full={b.full}
           data-full-width={b.full ? b.fullWidth : undefined}
           data-title={b.title}
@@ -71,6 +72,7 @@ const boards = await Promise.all(
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
             />
           </picture>
+          <span class="card-beam" aria-hidden="true"></span>
         </a>
         <figcaption class:list={[columns === 6 ? 'mt-2 text-xs leading-5' : 'mt-3 text-sm leading-6']}>
           <span class="font-medium text-ink">{b.title}</span>
