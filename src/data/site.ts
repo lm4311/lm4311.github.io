@@ -12,7 +12,7 @@ export const site = {
     'Portfolio of Luke Mu, an XR creative technologist, designer and developer working in Unreal Engine: co-located multiplayer VR, product visualization and film, motion capture and games.',
   // Leave any of the next four empty ('') to hide its button and link across the site.
   email: 'mulejia@gmail.com',
-  url: 'https://lm4311.github.io',
+  url: 'https://lukemucg.com',
   links: {
     // Add the full profile address, e.g. 'https://www.linkedin.com/in/...'. Empty hides the LinkedIn buttons.
     linkedin: 'https://www.linkedin.com/in/lejia-mu',

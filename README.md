@@ -5,7 +5,7 @@ Portfolio for an XR Creative Technologist / Designer & Developer. Built with Ast
 ```bash
 npm run dev      # http://localhost:4321
 npm run build    # static site in dist/
-npm run deploy   # build and publish to https://lm4311.github.io
+npm run deploy   # build and publish to https://lukemucg.com
 ```
 
 On Windows PowerShell, use `npm.cmd` instead of `npm` (e.g. `npm.cmd run deploy`).
@@ -16,6 +16,10 @@ The live site is served by GitHub Pages from the `gh-pages` branch of
 [lm4311/lm4311.github.io](https://github.com/lm4311/lm4311.github.io). `npm run deploy` builds the site and
 pushes the result to that branch; it goes live a minute or two later. Commit and push your source changes to
 `main` as usual. Pushing to `main` alone does not update the live site.
+
+The site's address is **https://lukemucg.com**. The domain is registered at IONOS, whose DNS points it at GitHub Pages
+(four A records for the bare domain, and a `www` CNAME to `lm4311.github.io`). `public/CNAME` holds the domain name so
+every deploy keeps it; the old address, lm4311.github.io, redirects to it.
 
 ## Structure
 
