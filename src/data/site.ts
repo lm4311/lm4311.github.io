@@ -20,7 +20,7 @@ export const site = {
   // The résumé is public/resume.pdf (currently the October 2025 version). Replace that file to update it.
   resume: '/resume.pdf',
   // A portrait for the About page: put the image in public/ and give its path, e.g. '/portrait.webp'.
-  portrait: '',
+  portrait: '/portrait.webp',
 };
 
 // Project groups, in the order they appear.
