@@ -77,6 +77,9 @@ const canonical = new URL(Astro.url.pathname, site.url);
         const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
         cursor.el.classList.toggle('on-card', !!card);
         cursor.el.classList.toggle('on-link', !card && !!link);
+        // Tell the page whether one of our shapes is showing, so the browser's cursor hides or returns at once,
+        // even when the page scrolled under a still mouse (see html.cursor-shape in global.css).
+        document.documentElement.classList.toggle('cursor-shape', !!card || !!link);
         // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
         cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
         if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');

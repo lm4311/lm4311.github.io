@@ -556,6 +556,15 @@
     html.custom-cursor :is(a, button, summary, input, select, textarea, label, [role='button'], [role='slider'], [data-cursor]) * {
       cursor: none !important;
     }
+    /* A browser only picks its cursor again when the mouse moves. If the page scrolls under a still mouse, the
+       rule above leaves the wrong cursor on screen: none at all after a link has scrolled away, or the arrow on
+       top of our ring after a link has scrolled in. So the script also marks the whole page while one of our
+       shapes is showing (html.cursor-shape, set in suit() in Base.astro). Changing the cursor style of the page
+       makes the browser pick its cursor again at once, mouse move or not. */
+    html.cursor-shape,
+    html.cursor-shape * {
+      cursor: none !important;
+    }
     .cur {
       display: block;
       position: fixed;
