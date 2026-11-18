@@ -1,6 +1,8 @@
 ---
 // A grid of self-hosted clips with controls, for behind-the-scenes footage and editor recordings.
 // Nothing downloads until the visitor presses play; each clip shows its poster still until then.
+// The still is named in data-poster and becomes the video's poster as the reader gets near (the script in
+// Base.astro): a `poster` written here would be fetched as soon as the page opens, even for a clip far down it.
 // MDX: <Clips items={[{ src: '/media/x/clip.mp4', poster: '/media/x/clip.webp', title: 'What it shows', ratio: '16 / 9' }]} />
 export interface Clip {
   src: string;
@@ -31,7 +33,7 @@ const grid = columns === 1 || items.length === 1 ? 'grid-cols-1' : 'grid-cols-1 
           controls
           playsinline
           preload="none"
-          poster={c.poster}
+          data-poster={c.poster}
           aria-label={c.title}
           class="block w-full rounded-xl border border-line bg-surface"
           style={`aspect-ratio: ${c.ratio ?? '16 / 9'}`}

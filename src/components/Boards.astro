@@ -67,7 +67,7 @@ const boards = await Promise.all(
               alt={b.note ? `${b.title}. ${b.note}` : b.title}
               width={b.thumb.width}
               height={b.thumb.height}
-              loading={i === 0 && b.wide ? 'eager' : 'lazy'}
+              loading="lazy"
               decoding="async"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
             />

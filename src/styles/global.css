@@ -588,6 +588,8 @@
       height: 8px;
       place-items: center;
       translate: -50% -50%;
+      /* The word is cut to the disc, so it opens and closes with it and never hangs outside a small ring. */
+      overflow: hidden;
       border: 1px solid var(--color-ink);
       border-radius: 50%;
       opacity: 0;
@@ -610,7 +612,7 @@
       text-transform: uppercase;
       color: var(--color-ink);
       opacity: 0;
-      transition: opacity 0.15s;
+      transition: opacity 0.12s;
     }
     /* Pressed: it tightens a little. */
     .cur.is-down i {
@@ -638,9 +640,11 @@
       -webkit-backdrop-filter: blur(10px) saturate(1.15);
       backdrop-filter: blur(10px) saturate(1.15);
     }
+    /* The word comes with the disc, at once. (It used to wait a tenth of a second and then fade in slowly, and
+       every quick move from one picture to the next started that wait again: the disc stayed empty.) */
     .cur.on-card span {
       opacity: 1;
-      transition: opacity 0.25s 0.1s;
+      transition: opacity 0.14s;
     }
   }
 

@@ -34,6 +34,11 @@ const {
   lazy = false,
 } = Astro.props;
 const inView = autoplay && lazy;
+// A video's own `poster` is fetched as soon as the page opens, wherever the video is. Only the video at the top of
+// a page should cost that. Every other clip (cards, case-study clips) keeps its still as an ordinary image under
+// the video instead, which the browser fetches only when the reader gets near it. A video with nothing loaded is
+// see-through, so the still shows until the first frame covers it.
+const posterNow = autoplay && !inView;
 const id = `c${seed.replace(/[^a-z0-9]/gi, '').toLowerCase()}${clay ? 'clay' : ''}`;
 const prims = coverScene(seed, clay ? '#bbbbbb' : accent, motif);
 const blurs = [...new Set(prims.map((p) => p.blur).filter((b): b is number => !!b))];
@@ -43,20 +48,25 @@ const fid = (b: number) => `${id}-b${String(b).replace('.', '_')}`;
 <div class:list={['overflow-hidden bg-surface', !/\babsolute\b/.test(className) && 'relative', className]}>
   {
     video ? (
-      <video
-        class="absolute inset-0 h-full w-full object-cover"
-        src={video}
-        poster={poster}
-        muted
-        loop
-        playsinline
-        preload={autoplay && !inView ? 'auto' : 'none'}
-        autoplay={autoplay && !inView}
-        controls={controls}
-        data-hover-play={!autoplay}
-        data-inview-play={inView ? '' : undefined}
-        aria-hidden={controls ? undefined : 'true'}
-      />
+      <Fragment>
+        {poster && !posterNow && (
+          <img class="absolute inset-0 h-full w-full object-cover" src={poster} alt="" loading="lazy" decoding="async" />
+        )}
+        <video
+          class="absolute inset-0 h-full w-full object-cover"
+          src={video}
+          poster={posterNow ? poster : undefined}
+          muted
+          loop
+          playsinline
+          preload={autoplay && !inView ? 'auto' : 'none'}
+          autoplay={autoplay && !inView}
+          controls={controls}
+          data-hover-play={!autoplay}
+          data-inview-play={inView ? '' : undefined}
+          aria-hidden={controls ? undefined : 'true'}
+        />
+      </Fragment>
     ) : poster ? (
       <img class="absolute inset-0 h-full w-full object-cover" src={poster} alt={alt} loading="lazy" />
     ) : (

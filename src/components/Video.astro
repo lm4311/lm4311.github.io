@@ -1,5 +1,6 @@
 ---
 // A self-hosted video clip with controls. Nothing downloads until the visitor presses play.
+// The poster is fetched only as the reader gets near the clip (data-poster, see Clips.astro).
 // MDX: <Video src="/media/clip.mp4" poster="/media/clip.webp" ratio="16 / 9" title="Cabin tour" caption="…" />
 interface Props {
   /** Path under /public. */
@@ -20,7 +21,7 @@ const { src, poster, ratio = '16 / 9', title, caption, class: className = 'my-10
     controls
     playsinline
     preload="none"
-    poster={poster}
+    data-poster={poster}
     aria-label={title}
     class="block w-full rounded-2xl border border-line bg-surface"
     style={`aspect-ratio: ${ratio}`}

@@ -147,6 +147,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
         // Always, even for the same element: the cursor element is new after a page change, and the mouse may
         // just have come back into the window.
         suit(target);
+        wake();
         // The cursor may have moved within the same element, or the element under a still cursor: lean again.
         if (!reduced.matches) for (const el of hovered) if (el instanceof HTMLElement && el.hasAttribute('data-tilt')) tilt(el);
       }
@@ -214,8 +215,12 @@ const canonical = new URL(Astro.url.pathname, site.url);
         cursor.el = null;
         document.documentElement.classList.remove('cursor-shape');
       });
-      (function follow() {
-        requestAnimationFrame(follow);
+      // Move the shape to the mouse. This runs frame by frame only while there is something to do (the mouse has
+      // moved, or the image viewer has opened or closed) and then stops, so a page being read costs nothing.
+      // Every mouse move and every look at what is under the cursor starts it again.
+      let following = false;
+      function follow() {
+        following = false;
         if (!cursor.el || !cursor.seen) return;
         // A dialog (the image viewer) opens in the browser's top layer, above the rest of the page,
         // so while one is open the cursor lives inside it.
@@ -225,8 +230,16 @@ const canonical = new URL(Astro.url.pathname, site.url);
         const k = reduced.matches ? 1 : 0.6;
         cursor.sx += (cursor.x - cursor.sx) * k;
         cursor.sy += (cursor.y - cursor.sy) * k;
+        const arrived = Math.abs(cursor.x - cursor.sx) < 0.1 && Math.abs(cursor.y - cursor.sy) < 0.1;
+        if (arrived) [cursor.sx, cursor.sy] = [cursor.x, cursor.y];
         cursor.el.style.transform = `translate3d(${cursor.sx.toFixed(1)}px, ${cursor.sy.toFixed(1)}px, 0)`;
-      })();
+        if (!arrived) wake();
+      }
+      function wake() {
+        if (following) return;
+        following = true;
+        requestAnimationFrame(follow);
+      }
 
       // ---------- Sections come up from dark as they enter the screen ([data-rise]) ----------
       function mountReveal() {
@@ -252,6 +265,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
         hovered = [];
         hoverTarget = null;
         suit(null);
+        wake(); // put the new page's cursor element where the mouse is
         lookAgain();
         mountReveal();
 
@@ -271,6 +285,20 @@ const canonical = new URL(Astro.url.pathname, site.url);
           card.addEventListener('focusout', stop);
         });
 
+        // Clips with controls (Clips.astro, Video.astro) get their poster still as the reader gets near them.
+        const posters = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const clip = entry.target as HTMLVideoElement;
+              clip.poster = clip.dataset.poster!;
+              posters.unobserve(clip);
+            }
+          },
+          { rootMargin: '1200px 0px' },
+        );
+        document.querySelectorAll<HTMLVideoElement>('video[data-poster]').forEach((clip) => posters.observe(clip));
+
         // Case-study clips load and play only while they are on screen.
         const clips = document.querySelectorAll<HTMLVideoElement>('video[data-inview-play]');
         if (!clips.length) return;
@@ -279,6 +307,13 @@ const canonical = new URL(Astro.url.pathname, site.url);
           clips.forEach((clip) => {
             clip.controls = true;
             clip.removeAttribute('aria-hidden');
+            // The clip's still is an image under it (Cover.astro), and a browser paints its controls panel over
+            // that. So here the still becomes the video's own poster, like any other clip with controls.
+            const still = clip.previousElementSibling;
+            if (still instanceof HTMLImageElement) {
+              clip.dataset.poster = still.getAttribute('src') ?? '';
+              posters.observe(clip);
+            }
           });
           return;
         }
