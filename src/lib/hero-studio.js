@@ -4,7 +4,7 @@
 //   extruded with rounded edges and finished in car paint (a metallic base under a clear coat), standing on a
 //   polished floor that mirrors them. What makes paint read as paint is what it reflects, so the scene carries
 //   its own studio for that: see "What the paint reflects" below.
-// - On load the lights come on one after another: the edge lights, the wall light, then the key.
+// - On load the lights come on one after another: the front (key) light, the edge lights, then the wall light.
 // - The cursor moves the key light (and the camera, very slightly).
 // - The scroll wipes the frame from the final render to "lighting only": the same scene with every material
 //   replaced by matte grey clay. Each frame is drawn in two passes, one per side of the divider.
@@ -325,10 +325,10 @@ export function start(stage, options = {}) {
   };
 
   const drawLights = (t) => {
-    // Lights on, one after another: the edges first, then the wall, then the key.
-    const level = { rim: ease((t - 0.3) / 0.8), wash: ease((t - 0.9) / 0.8), key: ease((t - 1.5) / 0.9) };
+    // Lights on, one after another: the front (key) light first, then the edges, then the wall.
+    const level = { key: ease((t - 0.3) / 0.9), rim: ease((t - 1.0) / 0.8), wash: ease((t - 1.6) / 0.8) };
     for (const light of lights) light.intensity = light.userData.level * level[light.userData.group];
-    // The paint's reflections come on with the lights it reflects: a little with the edge lights, the rest with the key.
+    // The paint's reflections come on with the lights it reflects: most with the key, the rest with the edge lights.
     paint.envMapIntensity = 0.3 * level.rim + 0.7 * level.key;
     studio.on.value = level.key;
   };
