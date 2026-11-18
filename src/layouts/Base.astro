@@ -69,20 +69,25 @@ const canonical = new URL(Astro.url.pathname, site.url);
         document.body.append(cursor.el);
         if (cursor.seen) document.documentElement.classList.add('custom-cursor');
       }
-      // Give the cursor the shape that suits what is under it.
+      // Give the cursor the shape that suits what is under it, and hide the browser's cursor only while that shape
+      // is really on screen. Everything that changes the cursor goes through here.
       function suit(target: Element | null) {
-        if (!cursor.el) return;
+        const el = cursor.el?.isConnected ? cursor.el : null;
         const card = target?.closest('[data-cursor]');
-        // (the same list hides the browser's cursor, in global.css)
         const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
-        cursor.el.classList.toggle('on-card', !!card);
-        cursor.el.classList.toggle('on-link', !card && !!link);
-        // Tell the page whether one of our shapes is showing, so the browser's cursor hides or returns at once,
-        // even when the page scrolled under a still mouse (see html.cursor-shape in global.css).
-        document.documentElement.classList.toggle('cursor-shape', !!card || !!link);
-        // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
-        cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
-        if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');
+        // An embedded video is another page: the browser's cursor shows inside it, so ours steps aside.
+        const away = !cursor.inside || target instanceof HTMLIFrameElement;
+        const shape = el && !away ? (card ? 'on-card' : link ? 'on-link' : '') : '';
+        if (el) {
+          el.classList.toggle('on-card', shape === 'on-card');
+          el.classList.toggle('on-link', shape === 'on-link');
+          el.classList.toggle('is-away', away);
+          const word = card?.getAttribute('data-cursor') ?? '';
+          const label = el.querySelector('span')!;
+          if (card && label.textContent !== word) label.textContent = word;
+        }
+        // See html.cursor-shape in global.css.
+        document.documentElement.classList.toggle('cursor-shape', shape !== '');
       }
 
       // ---------- Hover that follows the cursor ----------
@@ -138,51 +143,76 @@ const canonical = new URL(Astro.url.pathname, site.url);
             el.dispatchEvent(new CustomEvent('hover:enter'));
           }
           hovered = next;
-          suit(target);
         }
+        // Always, even for the same element: the cursor element is new after a page change, and the mouse may
+        // just have come back into the window.
+        suit(target);
         // The cursor may have moved within the same element, or the element under a still cursor: lean again.
         if (!reduced.matches) for (const el of hovered) if (el instanceof HTMLElement && el.hasAttribute('data-tilt')) tilt(el);
       }
 
-      document.addEventListener(
-        'pointermove',
-        (e) => {
-          if (e.pointerType !== 'mouse' || !cursor.el) return;
-          cursor.x = e.clientX;
-          cursor.y = e.clientY;
-          cursor.inside = true;
-          if (!cursor.seen) {
-            cursor.seen = true;
-            cursor.sx = cursor.x;
-            cursor.sy = cursor.y;
-            document.documentElement.classList.add('custom-cursor');
-          }
-          hover(e.target instanceof Element ? e.target : null);
-        },
-        { passive: true },
-      );
-      // The page can also move under a cursor that is standing still: scrolling, or a change of page. No mouse event
-      // comes then, so look again at what is under the cursor's last place.
+      const onMouse = (e: PointerEvent) => {
+        if (e.pointerType !== 'mouse' || !cursor.el) return;
+        cursor.x = e.clientX;
+        cursor.y = e.clientY;
+        cursor.inside = true;
+        if (!cursor.seen) {
+          cursor.seen = true;
+          cursor.sx = cursor.x;
+          cursor.sy = cursor.y;
+          document.documentElement.classList.add('custom-cursor');
+        }
+        hover(e.target instanceof Element ? e.target : null);
+      };
+      document.addEventListener('pointermove', onMouse, { passive: true });
+      // Also when the mouse crosses onto something without a move being reported, as when it enters an embedded video.
+      document.addEventListener('pointerover', onMouse, { passive: true });
+
+      // What is under the cursor can change while the mouse stands still: the page scrolls, a new page comes in,
+      // the image viewer opens or closes, a section folds open, a card tilts away. No mouse event comes then, so
+      // look again at what is under the cursor's last place.
       let looking = false;
       function lookAgain() {
         if (looking || !cursor.seen || !cursor.inside) return;
         looking = true;
         requestAnimationFrame(() => {
           looking = false;
-          hover(document.elementFromPoint(cursor.x, cursor.y));
+          if (!cursor.inside) return;
+          const under = document.elementFromPoint(cursor.x, cursor.y);
+          // While one page is fading into the next, the browser reports the whole document as what is under the
+          // mouse. That says nothing about the new page, so wait: the regular check below will ask again.
+          if (under === document.documentElement) return;
+          hover(under);
         });
       }
       // (capture: scrolling inside an element, such as a wide table, counts too)
       addEventListener('scroll', lookAgain, { passive: true, capture: true });
       addEventListener('resize', lookAgain);
-      document.addEventListener('pointerdown', () => cursor.el?.classList.add('is-down'));
+      addEventListener('focus', lookAgain);
+      document.addEventListener('toggle', lookAgain, true); // a fold or the image viewer opening and closing
+      document.addEventListener('keyup', lookAgain); // Escape closing the image viewer, arrow keys changing its picture
+      document.addEventListener('click', () => requestAnimationFrame(lookAgain)); // whatever the click opened or closed
+      // And as a net under all of that, a regular check: cheap, and it catches anything not listed above
+      // (a picture that loads and pushes the page down, the end of a page change, an animation).
+      setInterval(() => !document.hidden && lookAgain(), 250);
+
+      document.addEventListener('pointerdown', (e) => {
+        // A finger on a touch screen has no cursor and no hover: put both away.
+        if (e.pointerType !== 'mouse') return leave();
+        cursor.el?.classList.add('is-down');
+      });
       document.addEventListener('pointerup', () => cursor.el?.classList.remove('is-down'));
-      // Leaving the window: nothing is hovered, and our cursor hides until the mouse comes back.
-      document.addEventListener('mouseout', (e) => {
-        if (e.relatedTarget) return;
+      // Leaving the window: nothing is hovered, and our shape hides until the mouse comes back.
+      function leave() {
         cursor.inside = false;
         hover(null);
-        cursor.el?.classList.add('is-away');
+      }
+      document.addEventListener('mouseout', (e) => !e.relatedTarget && leave());
+      // A page change replaces everything under the cursor: forget the old page before it goes.
+      document.addEventListener('astro:before-swap', () => {
+        hover(null);
+        cursor.el = null;
+        document.documentElement.classList.remove('cursor-shape');
       });
       (function follow() {
         requestAnimationFrame(follow);
@@ -217,9 +247,11 @@ const canonical = new URL(Astro.url.pathname, site.url);
 
       document.addEventListener('astro:page-load', () => {
         mountCursor();
-        // A new page is under the cursor: forget the old page's elements and look again.
+        // A new page is under the cursor: forget the old page's elements and look again (the regular check keeps
+        // asking until the new page has finished fading in).
         hovered = [];
         hoverTarget = null;
+        suit(null);
         lookAgain();
         mountReveal();
 
