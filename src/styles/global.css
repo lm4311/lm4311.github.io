@@ -541,17 +541,19 @@
     filter: none;
   }
 
-  /* ---------- The cursor: one small point that changes shape ----------
-     A single shape in the site's off-white, so nothing ever mismatches: a small point at rest, a thin ring over
-     links and buttons, a frosted disc with a word over pictures, a point of light over the homepage opening.
-     A dark hairline around it keeps it visible on light pictures.
+  /* ---------- The cursor ----------
+     At rest the browser's own cursor shows. Over something to interact with, it gives way to the site's own shape,
+     in the site's off-white: a thin ring over links and buttons, a frosted disc with a word over pictures
+     (View, Open, Drag). Leaving, the shape closes and the browser's cursor is back.
      Only for a mouse or trackpad. The script in Base.astro adds html.custom-cursor on the first move. */
   .cur {
     display: none;
   }
   @media (hover: hover) and (pointer: fine) {
-    html.custom-cursor,
-    html.custom-cursor * {
+    /* The browser's cursor is hidden only over the things that get a shape of their own.
+       Keep this list the same as the one in suit() in Base.astro. */
+    html.custom-cursor :is(a, button, summary, input, select, textarea, label, [role='button'], [role='slider'], [data-cursor]),
+    html.custom-cursor :is(a, button, summary, input, select, textarea, label, [role='button'], [role='slider'], [data-cursor]) * {
       cursor: none !important;
     }
     .cur {
@@ -573,24 +575,23 @@
     html.custom-cursor .cur.is-away {
       opacity: 0;
     }
+    /* At rest the shape is closed and unseen: the browser's cursor is the cursor. */
     .cur i {
       position: absolute;
       left: 0;
       top: 0;
       display: grid;
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       place-items: center;
       translate: -50% -50%;
       border: 1px solid var(--color-ink);
       border-radius: 50%;
-      background: var(--color-ink);
-      box-shadow:
-        0 0 0 1px rgb(8 9 10 / 0.3),
-        0 1px 6px rgb(0 0 0 / 0.3);
+      opacity: 0;
       transition:
         width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
         height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.2s,
         background-color 0.3s,
         border-color 0.3s,
         box-shadow 0.4s,
@@ -612,7 +613,7 @@
     .cur.is-down i {
       scale: 0.8;
     }
-    /* Over a link or button: the point opens into a thin ring. */
+    /* Over a link or button: a thin ring. */
     .cur.on-link i {
       width: 36px;
       height: 36px;
@@ -621,6 +622,7 @@
       box-shadow:
         0 0 0 1px rgb(8 9 10 / 0.22),
         inset 0 0 0 1px rgb(8 9 10 / 0.18);
+      opacity: 1;
     }
     /* Over a project picture, a gallery picture or a slider: a frosted disc with a word. */
     .cur.on-card i {
@@ -629,19 +631,13 @@
       border-color: rgb(241 240 236 / 0.32);
       background: rgb(8 9 10 / 0.5);
       box-shadow: 0 14px 30px -14px rgb(0 0 0 / 0.7);
+      opacity: 1;
       -webkit-backdrop-filter: blur(10px) saturate(1.15);
       backdrop-filter: blur(10px) saturate(1.15);
     }
     .cur.on-card span {
       opacity: 1;
       transition: opacity 0.25s 0.1s;
-    }
-    /* Over the homepage opening the cursor is the key light: the point glows. */
-    .cur.on-light i {
-      box-shadow:
-        0 0 0 1px rgb(8 9 10 / 0.2),
-        0 0 22px 7px rgb(255 238 214 / 0.32),
-        0 0 64px 22px rgb(255 238 214 / 0.12);
     }
   }
 

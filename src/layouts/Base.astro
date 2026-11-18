@@ -55,9 +55,9 @@ const canonical = new URL(Astro.url.pathname, site.url);
       const fine = matchMedia('(hover: hover) and (pointer: fine)');
       const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
-      // ---------- The cursor: one small point that changes shape ----------
-      // Styles are under "The cursor" in global.css. It becomes a ring over links and buttons, a disc with a word
-      // over [data-cursor] pictures, and a point of light over the homepage opening ([data-hero]).
+      // ---------- The cursor ----------
+      // Styles are under "The cursor" in global.css. At rest the browser's own cursor shows. Over links and buttons
+      // the site's ring takes its place, and over [data-cursor] pictures a disc with their word.
       const cursor = { x: 0, y: 0, sx: 0, sy: 0, seen: false, inside: false, el: null as HTMLElement | null };
       function mountCursor() {
         if (!fine.matches) return;
@@ -73,11 +73,10 @@ const canonical = new URL(Astro.url.pathname, site.url);
       function suit(target: Element | null) {
         if (!cursor.el) return;
         const card = target?.closest('[data-cursor]');
+        // (the same list hides the browser's cursor, in global.css)
         const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
-        const light = target?.closest('[data-hero].is-live');
         cursor.el.classList.toggle('on-card', !!card);
         cursor.el.classList.toggle('on-link', !card && !!link);
-        cursor.el.classList.toggle('on-light', !card && !link && !!light);
         // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
         cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
         if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');
@@ -189,8 +188,8 @@ const canonical = new URL(Astro.url.pathname, site.url);
         // so while one is open the cursor lives inside it.
         const host = document.querySelector('dialog[open]') ?? document.body;
         if (cursor.el.parentElement !== host) host.append(cursor.el);
-        // It trails the mouse by a hair, which reads as smooth without feeling slow.
-        const k = reduced.matches ? 1 : 0.34;
+        // The shape sits where the mouse is: it stands in for the browser's cursor, so it must not lag behind it.
+        const k = reduced.matches ? 1 : 0.6;
         cursor.sx += (cursor.x - cursor.sx) * k;
         cursor.sy += (cursor.y - cursor.sy) * k;
         cursor.el.style.transform = `translate3d(${cursor.sx.toFixed(1)}px, ${cursor.sy.toFixed(1)}px, 0)`;
