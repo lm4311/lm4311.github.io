@@ -20,7 +20,8 @@ import { getProjects } from '../../lib/work';
 import { groupLabel } from '../../data/site';
 
 export async function getStaticPaths() {
-  const projects = await getProjects();
+  // Projects still in development have a card on the homepage but no page of their own.
+  const projects = (await getProjects()).filter((p) => !p.data.inDevelopment);
   return projects.map((project, i) => ({
     params: { id: project.id },
     props: {

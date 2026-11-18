@@ -61,6 +61,8 @@ const work = defineCollection({
     featured: z.boolean().default(false),
     order: z.number().default(99),
     placeholder: z.boolean().default(false),
+    // Not ready to show: the card is labelled "Under development" and can't be opened, and no project page is built.
+    inDevelopment: z.boolean().default(false),
   }),
 });
 
