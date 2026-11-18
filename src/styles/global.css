@@ -422,6 +422,7 @@
   }
   .card-shot {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     border-radius: 1rem;
     background: var(--color-surface);
@@ -435,9 +436,24 @@
       0 0 0 1px rgb(255 255 255 / 0.17),
       0 44px 70px -34px rgb(0 0 0 / 0.95);
   }
-  /* The picture is a little larger than its frame, so it can shift behind it. */
+  /* The picture and the light beam, cut to the rounded frame.
+     A rounded `overflow: hidden` alone is not enough in Safari: once the card tilts in 3D and the picture and the
+     beam start to move, Safari stops cutting them to the rounded corners (the picture, which is larger than its
+     frame, then spills over the frame's edge line and shadow). A clip-path is drawn as a mask over everything
+     inside, moving or not, so it holds. It sits on this inner box, not on .card-shot, because it would also cut
+     off .card-shot's edge line and shadow. `isolation` keeps the beam's blending inside this box, flat, instead
+     of reaching out into the tilting card. */
+  .card-clip {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: inherit;
+    clip-path: inset(0 round 1rem);
+  }
+  /* The picture is a little larger than its frame, so it can shift behind it. (A flat shift: nothing inside the
+     frame needs depth, and a 3D one gives Safari one more layer to lose the corners on.) */
   .card-pic {
-    transform: scale(1.07) translate3d(calc(var(--px) * -1.6%), calc(var(--py) * -1.6%), 0);
+    transform: scale(1.07) translate(calc(var(--px) * -1.6%), calc(var(--py) * -1.6%));
     transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .card-beam {

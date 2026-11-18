@@ -45,7 +45,7 @@ const blurs = [...new Set(prims.map((p) => p.blur).filter((b): b is number => !!
 const fid = (b: number) => `${id}-b${String(b).replace('.', '_')}`;
 ---
 
-<div class:list={['overflow-hidden bg-surface', !/\babsolute\b/.test(className) && 'relative', className]}>
+<div class:list={['isolate overflow-hidden bg-surface', !/\babsolute\b/.test(className) && 'relative', className]}>
   {
     video ? (
       <Fragment>

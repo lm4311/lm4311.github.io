@@ -33,8 +33,11 @@ const Wrap = inDevelopment ? 'div' : 'a';
       <div class="card-frame">
         <!-- The picture grows into the project page's top media when the card is opened. -->
         <div class="card-shot" transition:name={inDevelopment || !morph ? undefined : `cover-${project.id}`}>
-          <Cover seed={title} accent={accent} motif={motif} video={video} poster={poster} alt="" class="card-pic aspect-video" />
-          <span class="card-beam" aria-hidden="true"></span>
+          <!-- The picture and the beam are cut to the rounded frame here (see .card-clip in global.css). -->
+          <div class="card-clip">
+            <Cover seed={title} accent={accent} motif={motif} video={video} poster={poster} alt="" class="card-pic aspect-video" />
+            <span class="card-beam" aria-hidden="true"></span>
+          </div>
         </div>
         {
           award && (
