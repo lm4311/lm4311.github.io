@@ -1,5 +1,34 @@
 @import "tailwindcss";
 
+/* ---------- Hover that follows the cursor ----------
+   A browser only updates :hover when the mouse moves. If the page scrolls under a still mouse, the thing that
+   arrives under the cursor is not hovered, and the thing that left still is. So with a mouse, hover on this site
+   is tracked by the script in Base.astro instead: it marks whatever is under the cursor, and each of its parents,
+   with data-hover, after every mouse move and every scroll. html.custom-cursor is present while it is doing so.
+
+   Every hover style, here and in the hover: and group-hover: utilities, therefore reads "marked data-hover, or
+   natively hovered when the script is not tracking" (no JavaScript, or before the first mouse move). */
+@custom-variant hover {
+  &[data-hover] {
+    @slot;
+  }
+  @media (hover: hover) {
+    &:hover:not(.custom-cursor *) {
+      @slot;
+    }
+  }
+}
+@custom-variant group-hover {
+  &:is(:where(.group)[data-hover] *) {
+    @slot;
+  }
+  @media (hover: hover) {
+    &:is(:where(.group):hover:not(.custom-cursor *) *) {
+      @slot;
+    }
+  }
+}
+
 @theme {
   --color-bg: #08090a;
   --color-surface: #0f1113;
@@ -263,7 +292,7 @@
       color 0.2s,
       border-color 0.2s;
   }
-  .contents-rail a:hover {
+  .contents-rail a:is([data-hover], :hover:not(.custom-cursor *)) {
     color: var(--color-ink);
   }
   .contents-rail a.is-current {
@@ -386,7 +415,7 @@
       0 18px 36px -26px rgb(0 0 0 / 0.9);
     transition: box-shadow 0.5s;
   }
-  .project-card:hover .card-shot {
+  .project-card:is([data-hover], :hover:not(.custom-cursor *)) .card-shot {
     box-shadow:
       0 0 0 1px rgb(255 255 255 / 0.17),
       0 44px 70px -34px rgb(0 0 0 / 0.95);
@@ -417,8 +446,8 @@
     );
   }
   @media (hover: hover) {
-    .project-card:hover .card-beam,
-    .beam-host:hover .card-beam {
+    .project-card:is([data-hover], :hover:not(.custom-cursor *)) .card-beam,
+    .beam-host:is([data-hover], :hover:not(.custom-cursor *)) .card-beam {
       transform: translateX(300%) skewX(-18deg);
       transition: transform 1.35s cubic-bezier(0.3, 0.6, 0.3, 1);
     }
@@ -627,8 +656,8 @@
     .portrait-subject {
       transition: none;
     }
-    .project-card:hover .card-beam,
-    .beam-host:hover .card-beam {
+    .project-card:is([data-hover], :hover:not(.custom-cursor *)) .card-beam,
+    .beam-host:is([data-hover], :hover:not(.custom-cursor *)) .card-beam {
       transform: translateX(-170%) skewX(-18deg);
       transition: none;
     }

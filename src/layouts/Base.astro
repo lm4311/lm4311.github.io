@@ -82,6 +82,66 @@ const canonical = new URL(Astro.url.pathname, site.url);
         cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
         if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');
       }
+
+      // ---------- Hover that follows the cursor ----------
+      // A browser only updates :hover when the mouse moves, so after a scroll the wrong thing stays hovered.
+      // This keeps its own record instead: the element under the cursor and each of its parents carry data-hover,
+      // which the hover styles read (see "Hover that follows the cursor" in global.css). Elements entering and
+      // leaving that set get a "hover:enter" or "hover:leave" event, and [data-tilt] elements in it lean toward
+      // the cursor. It runs after every mouse move, and again whenever the page moves under a still cursor.
+      let hovered: Element[] = [];
+      let hoverTarget: Element | null = null;
+      const tiltFrames = new WeakMap<Element, HTMLElement>();
+
+      // 3D tilt: sets --rx and --ry (degrees) and --px and --py (-0.5 to 0.5) on the element; the CSS does the rest.
+      function tilt(el: HTMLElement) {
+        let frame = tiltFrames.get(el);
+        if (!frame) {
+          frame = el.querySelector<HTMLElement>('.card-frame, .portrait-stage, img') ?? el;
+          tiltFrames.set(el, frame);
+        }
+        // data-tilt="14" sets the most the element turns, in degrees (9 by default).
+        const most = Number(el.dataset.tilt) || 9;
+        const r = frame.getBoundingClientRect();
+        const x = Math.min(1, Math.max(0, (cursor.x - r.left) / r.width)) - 0.5;
+        const y = Math.min(1, Math.max(0, (cursor.y - r.top) / r.height)) - 0.5;
+        el.classList.add('is-tilting');
+        el.style.setProperty('--ry', `${(x * most).toFixed(2)}deg`);
+        el.style.setProperty('--rx', `${(-y * most * 0.78).toFixed(2)}deg`);
+        el.style.setProperty('--px', x.toFixed(3));
+        el.style.setProperty('--py', y.toFixed(3));
+      }
+      function untilt(el: HTMLElement) {
+        el.classList.remove('is-tilting');
+        el.style.setProperty('--rx', '0deg');
+        el.style.setProperty('--ry', '0deg');
+        el.style.setProperty('--px', '0');
+        el.style.setProperty('--py', '0');
+      }
+
+      function hover(target: Element | null) {
+        if (target !== hoverTarget || (target && !target.hasAttribute('data-hover'))) {
+          hoverTarget = target;
+          const next: Element[] = [];
+          for (let el = target; el && el !== document.documentElement; el = el.parentElement) next.push(el);
+          for (const el of hovered) {
+            if (next.includes(el)) continue;
+            el.removeAttribute('data-hover');
+            el.dispatchEvent(new CustomEvent('hover:leave'));
+            if (el instanceof HTMLElement && el.hasAttribute('data-tilt')) untilt(el);
+          }
+          for (const el of next) {
+            if (el.hasAttribute('data-hover')) continue;
+            el.setAttribute('data-hover', '');
+            el.dispatchEvent(new CustomEvent('hover:enter'));
+          }
+          hovered = next;
+          suit(target);
+        }
+        // The cursor may have moved within the same element, or the element under a still cursor: lean again.
+        if (!reduced.matches) for (const el of hovered) if (el instanceof HTMLElement && el.hasAttribute('data-tilt')) tilt(el);
+      }
+
       document.addEventListener(
         'pointermove',
         (e) => {
@@ -95,7 +155,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
             cursor.sy = cursor.y;
             document.documentElement.classList.add('custom-cursor');
           }
-          suit(e.target instanceof Element ? e.target : null);
+          hover(e.target instanceof Element ? e.target : null);
         },
         { passive: true },
       );
@@ -107,7 +167,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
         looking = true;
         requestAnimationFrame(() => {
           looking = false;
-          suit(document.elementFromPoint(cursor.x, cursor.y));
+          hover(document.elementFromPoint(cursor.x, cursor.y));
         });
       }
       // (capture: scrolling inside an element, such as a wide table, counts too)
@@ -115,10 +175,11 @@ const canonical = new URL(Astro.url.pathname, site.url);
       addEventListener('resize', lookAgain);
       document.addEventListener('pointerdown', () => cursor.el?.classList.add('is-down'));
       document.addEventListener('pointerup', () => cursor.el?.classList.remove('is-down'));
-      // Leaving the window: hide ours until the mouse comes back.
+      // Leaving the window: nothing is hovered, and our cursor hides until the mouse comes back.
       document.addEventListener('mouseout', (e) => {
         if (e.relatedTarget) return;
         cursor.inside = false;
+        hover(null);
         cursor.el?.classList.add('is-away');
       });
       (function follow() {
@@ -134,34 +195,6 @@ const canonical = new URL(Astro.url.pathname, site.url);
         cursor.sy += (cursor.y - cursor.sy) * k;
         cursor.el.style.transform = `translate3d(${cursor.sx.toFixed(1)}px, ${cursor.sy.toFixed(1)}px, 0)`;
       })();
-
-      // ---------- 3D tilt: [data-tilt] elements lean toward the cursor ----------
-      // Sets --rx and --ry (degrees) and --px and --py (-0.5 to 0.5) on the element; the CSS does the rest.
-      function mountTilt() {
-        if (!fine.matches || reduced.matches) return;
-        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((el) => {
-          const frame = el.querySelector<HTMLElement>('.card-frame, .portrait-stage, img') ?? el;
-          // data-tilt="14" sets the most the element turns, in degrees (9 by default).
-          const most = Number(el.dataset.tilt) || 9;
-          el.addEventListener('pointermove', (e) => {
-            const r = frame.getBoundingClientRect();
-            const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) - 0.5;
-            const y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) - 0.5;
-            el.classList.add('is-tilting');
-            el.style.setProperty('--ry', `${(x * most).toFixed(2)}deg`);
-            el.style.setProperty('--rx', `${(-y * most * 0.78).toFixed(2)}deg`);
-            el.style.setProperty('--px', x.toFixed(3));
-            el.style.setProperty('--py', y.toFixed(3));
-          });
-          el.addEventListener('pointerleave', () => {
-            el.classList.remove('is-tilting');
-            el.style.setProperty('--rx', '0deg');
-            el.style.setProperty('--ry', '0deg');
-            el.style.setProperty('--px', '0');
-            el.style.setProperty('--py', '0');
-          });
-        });
-      }
 
       // ---------- Sections come up from dark as they enter the screen ([data-rise]) ----------
       function mountReveal() {
@@ -182,8 +215,10 @@ const canonical = new URL(Astro.url.pathname, site.url);
 
       document.addEventListener('astro:page-load', () => {
         mountCursor();
-        lookAgain(); // a new page is under the cursor
-        mountTilt();
+        // A new page is under the cursor: forget the old page's elements and look again.
+        hovered = [];
+        hoverTarget = null;
+        lookAgain();
         mountReveal();
 
         // Project loops play only while a card is hovered or focused.
@@ -192,8 +227,12 @@ const canonical = new URL(Astro.url.pathname, site.url);
           if (!video) return;
           const play = () => video.play().catch(() => {});
           const stop = () => video.pause();
-          card.addEventListener('pointerenter', play);
-          card.addEventListener('pointerleave', stop);
+          // With a mouse, "hover" is the site's own tracking (it also follows scrolling); a touch has no hover,
+          // so there the loop plays from the touch itself.
+          card.addEventListener('hover:enter', play);
+          card.addEventListener('hover:leave', stop);
+          card.addEventListener('pointerenter', (e) => e.pointerType !== 'mouse' && play());
+          card.addEventListener('pointerleave', (e) => e.pointerType !== 'mouse' && stop());
           card.addEventListener('focusin', play);
           card.addEventListener('focusout', stop);
         });
