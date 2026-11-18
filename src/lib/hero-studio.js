@@ -39,7 +39,6 @@ export function start(stage, options = {}) {
   const pin = stage.parentElement;
   const canvas = stage.querySelector('[data-hero-canvas]');
   const wipe = stage.querySelector('[data-hero-wipe]');
-  const cue = stage.querySelector('[data-hero-cue]');
   const copy = stage.querySelector('[data-hero-copy]');
   const still = stage.querySelector('[data-hero-still]'); // holds the lighting-only picture on touch screens
 

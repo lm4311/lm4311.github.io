@@ -15,10 +15,7 @@ import { site } from '../data/site';
     <div class="hero-still-clip"><canvas class="hero-still" data-hero-still aria-hidden="true"></canvas></div>
     <div class="hero-shade" aria-hidden="true"></div>
     <div class="hero-grain" aria-hidden="true"></div>
-    <div class="hero-wipe" data-hero-wipe aria-hidden="true">
-      <span class="label hero-wipe-l">Lighting only</span>
-      <span class="label hero-wipe-r">Final render</span>
-    </div>
+    <div class="hero-wipe" data-hero-wipe aria-hidden="true"></div>
     <div class="hero-copy container-x" data-hero-copy>
       <div class="max-w-xl min-w-0">
         <h1 class="hero-name font-display">{site.name}</h1>
@@ -29,11 +26,6 @@ import { site } from '../data/site';
           <a href="#work" class="btn-solid">View work <span aria-hidden="true">↓</span></a>
           {site.resume && <a href={site.resume} class="btn">Résumé</a>}
         </div>
-      </div>
-      <div class="hero-cue" data-hero-cue aria-hidden="true">
-        <p class="label">Rendered live in your browser</p>
-        <p class="label mt-1.5 text-ink">Scroll to see the lighting</p>
-        <div class="hero-cue-track"><i></i></div>
       </div>
     </div>
   </div>
@@ -102,7 +94,7 @@ import { site } from '../data/site';
     gap: 2rem;
   }
   /* The divider between the two renders: a box as wide as the frame, pushed right by --split, with the line on its
-     left edge and a label on either side of the line. */
+     left edge. */
   .hero-wipe {
     position: absolute;
     inset: 0;
@@ -121,39 +113,6 @@ import { site } from '../data/site';
     width: 1px;
     background: linear-gradient(to bottom, rgb(241 240 236 / 0.85), rgb(241 240 236 / 0.85) 62%, transparent 92%);
   }
-  .hero-wipe span {
-    position: absolute;
-    top: 1.4rem;
-    white-space: nowrap;
-    color: var(--color-ink);
-  }
-  .hero-wipe-l {
-    right: calc(100% + 14px);
-  }
-  .hero-wipe-r {
-    left: 14px;
-  }
-  .hero-cue {
-    display: none;
-    text-align: right;
-  }
-  .hero-cue-track {
-    position: relative;
-    margin: 0.7rem 0 0 auto;
-    width: 132px;
-    height: 1px;
-    background: rgb(241 240 236 / 0.22);
-  }
-  .hero-cue-track i {
-    position: absolute;
-    left: 0;
-    top: -0.5px;
-    width: 100%;
-    height: 2px;
-    background: var(--color-ink);
-    transform: scaleX(var(--split, 0));
-    transform-origin: 0 50%;
-  }
 
   /* ---------- Scroll-driven: the browser moves the divider with the scroll ----------
      Used on touch screens once the picture is frozen (.is-scroll-driven, set in hero-studio.js), in browsers that
@@ -166,7 +125,7 @@ import { site } from '../data/site';
       view-timeline: --hero-wipe block;
       view-timeline-inset: 4rem 0px; /* the navigation bar */
     }
-    .hero-stage.is-scroll-driven :is(.hero-still-clip, .hero-still, .hero-wipe, .hero-cue-track i) {
+    .hero-stage.is-scroll-driven :is(.hero-still-clip, .hero-still, .hero-wipe) {
       animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
       animation-fill-mode: both;
       animation-timeline: --hero-wipe;
@@ -181,9 +140,6 @@ import { site } from '../data/site';
     .hero-stage.is-scroll-driven .hero-wipe {
       animation-name: hero-line-across, hero-line-show;
       animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1), linear;
-    }
-    .hero-stage.is-scroll-driven .hero-cue-track i {
-      animation-name: hero-cue-fill;
     }
   }
   @keyframes hero-clip-in {
@@ -220,14 +176,6 @@ import { site } from '../data/site';
       opacity: 1;
     }
   }
-  @keyframes hero-cue-fill {
-    from {
-      transform: scaleX(0);
-    }
-    to {
-      transform: scaleX(1);
-    }
-  }
   /* The name as type: the fallback, large, above the rest of the copy. */
   .hero-name {
     margin-bottom: 1.5rem;
@@ -260,15 +208,8 @@ import { site } from '../data/site';
   }
   .hero-stage.no-3d canvas,
   .hero-stage.no-3d .hero-still-clip,
-  .hero-stage.no-3d .hero-wipe,
-  .hero-stage.no-3d .hero-cue,
-  .hero-stage:not(.is-live) .hero-cue {
+  .hero-stage.no-3d .hero-wipe {
     display: none;
-  }
-  @media (min-width: 768px) {
-    .hero-stage.is-live .hero-cue {
-      display: block;
-    }
   }
 </style>
 
