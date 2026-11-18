@@ -32,15 +32,26 @@ const paragraphs = about.map((text) =>
     <aside class:list={[!site.portrait && 'lg:pt-[6.5rem]']}>
       {
         site.portrait && (
-          <div class="tilt-portrait mb-10 max-w-md" data-tilt>
-            <!-- The portrait tilts toward the cursor, like the project cards. -->
-            <img
-              src={site.portrait}
-              alt={`Portrait of ${site.name}`}
-              width="800"
-              height="800"
-              class="aspect-square w-full rounded-2xl border border-line object-cover"
-            />
+          <div class="portrait-3d mb-10 max-w-md" data-tilt="14">
+            <!-- A portrait with depth: backdrop and person are separate layers. See "The portrait" in global.css. -->
+            <div class="portrait-stage">
+              {site.portraitSubject && site.portraitBackdrop ? (
+                <div class="portrait-window">
+                  <img class="portrait-back" src={site.portraitBackdrop} alt="" width="800" height="800" />
+                  <img class="portrait-subject" src={site.portraitSubject} alt={`Portrait of ${site.name}`} width="800" height="800" />
+                  <span class="portrait-sheen" />
+                </div>
+              ) : (
+                <div class="portrait-window">
+                  <img src={site.portrait} alt={`Portrait of ${site.name}`} width="800" height="800" />
+                  <span class="portrait-sheen" />
+                </div>
+              )}
+              <span class="portrait-frame" aria-hidden="true" />
+              <p class="portrait-tag rounded-full border border-line bg-bg/85 px-3.5 py-1.5 text-xs font-medium shadow-[0_14px_30px_-12px_rgb(0_0_0/0.9)]">
+                {site.name} <span class="text-muted">· {site.location}</span>
+              </p>
+            </div>
           </div>
         )
       }

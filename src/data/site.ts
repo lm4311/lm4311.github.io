@@ -21,6 +21,10 @@ export const site = {
   resume: '/resume.pdf',
   // A portrait for the About page: put the image in public/ and give its path, e.g. '/portrait.webp'.
   portrait: '/portrait.webp',
+  // The same portrait as two layers, for the 3D picture on the About page (made by scripts/portrait-layers.cjs).
+  // Leave both empty to show the plain portrait instead.
+  portraitSubject: '/portrait-subject.webp',
+  portraitBackdrop: '/portrait-backdrop.webp',
 };
 
 // Project groups, in the order they appear.

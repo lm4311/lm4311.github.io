@@ -20,10 +20,10 @@ const { title, summary, category, tags, accent, motif, video, poster, placeholde
 const Wrap = inDevelopment ? 'div' : 'a';
 ---
 
-<!-- data-cursor is the word the cursor's ring shows over this card. -->
-<article class="project-card group" data-tilt data-rise data-cursor={inDevelopment ? 'Soon' : 'View'}>
+<article class="project-card group" data-tilt data-rise>
   <Wrap href={inDevelopment ? undefined : `/work/${project.id}/`} class="card-body">
-    <div class="card-frame">
+    <!-- data-cursor is the word the cursor's ring shows over the picture. -->
+    <div class="card-frame" data-cursor={inDevelopment ? 'Soon' : 'View'}>
       <!-- The picture grows into the project page's top media when the card is opened. -->
       <div class="card-shot" transition:name={inDevelopment || !morph ? undefined : `cover-${project.id}`}>
         <Cover seed={title} accent={accent} motif={motif} video={video} poster={poster} alt="" class="card-pic aspect-video" />
