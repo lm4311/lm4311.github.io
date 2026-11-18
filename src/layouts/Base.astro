@@ -58,7 +58,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
       // ---------- The cursor: one small point that changes shape ----------
       // Styles are under "The cursor" in global.css. It becomes a ring over links and buttons, a disc with a word
       // over [data-cursor] pictures, and a point of light over the homepage opening ([data-hero]).
-      const cursor = { x: 0, y: 0, sx: 0, sy: 0, seen: false, el: null as HTMLElement | null };
+      const cursor = { x: 0, y: 0, sx: 0, sy: 0, seen: false, inside: false, el: null as HTMLElement | null };
       function mountCursor() {
         if (!fine.matches) return;
         // The page's body is replaced on every page change, so the element is put back each time.
@@ -69,36 +69,57 @@ const canonical = new URL(Astro.url.pathname, site.url);
         document.body.append(cursor.el);
         if (cursor.seen) document.documentElement.classList.add('custom-cursor');
       }
+      // Give the cursor the shape that suits what is under it.
+      function suit(target: Element | null) {
+        if (!cursor.el) return;
+        const card = target?.closest('[data-cursor]');
+        const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
+        const light = target?.closest('[data-hero].is-live');
+        cursor.el.classList.toggle('on-card', !!card);
+        cursor.el.classList.toggle('on-link', !card && !!link);
+        cursor.el.classList.toggle('on-light', !card && !link && !!light);
+        // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
+        cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
+        if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');
+      }
       document.addEventListener(
         'pointermove',
         (e) => {
           if (e.pointerType !== 'mouse' || !cursor.el) return;
           cursor.x = e.clientX;
           cursor.y = e.clientY;
+          cursor.inside = true;
           if (!cursor.seen) {
             cursor.seen = true;
             cursor.sx = cursor.x;
             cursor.sy = cursor.y;
             document.documentElement.classList.add('custom-cursor');
           }
-          const target = e.target instanceof Element ? e.target : null;
-          const card = target?.closest('[data-cursor]');
-          const link = target?.closest('a, button, summary, input, select, textarea, label, [role="button"], [role="slider"]');
-          const light = target?.closest('[data-hero].is-live');
-          cursor.el.classList.toggle('on-card', !!card);
-          cursor.el.classList.toggle('on-link', !card && !!link);
-          cursor.el.classList.toggle('on-light', !card && !link && !!light);
-          // An embedded video is another page: the real cursor shows inside it, so ours steps aside.
-          cursor.el.classList.toggle('is-away', target instanceof HTMLIFrameElement);
-          if (card) cursor.el.querySelector('span')!.textContent = card.getAttribute('data-cursor');
+          suit(e.target instanceof Element ? e.target : null);
         },
         { passive: true },
       );
+      // The page can also move under a cursor that is standing still: scrolling, or a change of page. No mouse event
+      // comes then, so look again at what is under the cursor's last place.
+      let looking = false;
+      function lookAgain() {
+        if (looking || !cursor.seen || !cursor.inside) return;
+        looking = true;
+        requestAnimationFrame(() => {
+          looking = false;
+          suit(document.elementFromPoint(cursor.x, cursor.y));
+        });
+      }
+      // (capture: scrolling inside an element, such as a wide table, counts too)
+      addEventListener('scroll', lookAgain, { passive: true, capture: true });
+      addEventListener('resize', lookAgain);
       document.addEventListener('pointerdown', () => cursor.el?.classList.add('is-down'));
       document.addEventListener('pointerup', () => cursor.el?.classList.remove('is-down'));
       // Leaving the window: hide ours until the mouse comes back.
       document.addEventListener('mouseout', (e) => {
-        if (!e.relatedTarget) cursor.el?.classList.add('is-away');
+        if (e.relatedTarget) return;
+        cursor.inside = false;
+        cursor.el?.classList.add('is-away');
       });
       (function follow() {
         requestAnimationFrame(follow);
@@ -161,6 +182,7 @@ const canonical = new URL(Astro.url.pathname, site.url);
 
       document.addEventListener('astro:page-load', () => {
         mountCursor();
+        lookAgain(); // a new page is under the cursor
         mountTilt();
         mountReveal();
 
