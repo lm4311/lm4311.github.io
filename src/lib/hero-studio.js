@@ -103,12 +103,16 @@ export function start(stage, options = {}) {
   const wallFinal = keep(new THREE.MeshStandardMaterial({ color: 0x14171b, roughness: 0.75, side: THREE.DoubleSide }));
   const wall = new THREE.Mesh(wallGeo, wallFinal); wall.position.y = 0.002; wall.receiveShadow = true; scene.add(wall);
 
-  // The final floor: polished, so it mirrors the name. The reflection blurs and fades toward the camera, in the
-  // mirror's own shader (three 0.128 does not draw transparent layers over a mirror).
-  const taps = coarse ? 1 : 2; // blur samples each way: 3x3 on phones, 5x5 elsewhere
+  // The final floor: polished, so it mirrors the name. The reflection is sharp where the letters stand, then
+  // softens and fades toward the camera, in the mirror's own shader (three 0.128 does not draw transparent
+  // layers over a mirror).
+  // The softening reads smaller copies of the mirror image that the graphics card makes itself (mipmaps), which
+  // is smooth at any strength. (Spreading a few samples wide apart, as before, drew every bright edge several
+  // times over: a fan of lines under each letter.) Those copies need a power-of-two picture size.
+  const mirrorSize = coarse ? 1024 : 2048;
   const mirror = new Reflector(floorGeo, {
-    textureWidth: coarse ? 768 : 1536,
-    textureHeight: coarse ? 768 : 1536,
+    textureWidth: mirrorSize,
+    textureHeight: mirrorSize,
     color: 0xffffff,
     clipBias: 0.003,
     shader: {
@@ -127,13 +131,17 @@ export function start(stage, options = {}) {
           // 0 under the letters, 1 where the reflection has faded out. "reach" grows with the camera's distance:
           // on a narrow screen the camera stands far back and the reflection stretches further along the floor.
           float d = clamp(vWorld.z / reach, 0.0, 1.0);
-          // The blur is sized against the letters: it shrinks as the camera stands further back.
-          float r = (0.0012 + 0.0075 * d) * ${(2 / taps).toFixed(1)} * (7.0 / reach);
+          // How soft, as a share of the picture's width. It is sized against the letters, so it shrinks as the
+          // camera stands further back.
+          float soft = 0.0052 * smoothstep(0.03, 0.8, d) * (7.0 / reach);
+          float level = log2(max(soft * ${mirrorSize.toFixed(1)}, 1.0)); // which smaller copy holds that much softening
+          // Nine readings close together take the blockiness out of the smaller copies.
           vec3 acc = vec3(0.0);
-          for (int i = -${taps}; i <= ${taps}; i++) for (int j = -${taps}; j <= ${taps}; j++) acc += texture2D(tDiffuse, uv + vec2(float(i), float(j) * 1.6) * r).rgb;
-          acc /= ${((taps * 2 + 1) ** 2).toFixed(1)};
-          acc = pow(acc / (acc + vec3(0.55)), vec3(1.0 / 2.2));  // the mirror image is linear light; bring it to screen values
-          float keep = mix(0.52, 0.0, smoothstep(0.0, 0.8, d));
+          for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) acc += texture2D(tDiffuse, uv + vec2(float(i), float(j)) * soft * 0.55, level).rgb;
+          acc /= 9.0;
+          // The mirror image arrives in screen values already (three renders it with the same tone curve as the
+          // main picture), so it is used as it is: the reflected letters keep the contrast of the real ones.
+          float keep = mix(0.78, 0.0, smoothstep(0.0, 0.9, d));
           float far = 1.0 - smoothstep(-1.0, -2.6, vWorld.z) * 0.25;
           gl_FragColor = vec4(acc * color * keep * far + vec3(0.012, 0.014, 0.017), 1.0);
         }`,
@@ -143,6 +151,18 @@ export function start(stage, options = {}) {
   keep(mirror.material); keep(mirror.getRenderTarget());
   // Some phone GPUs cannot render into a three-channel picture; four channels work everywhere.
   mirror.getRenderTarget().texture.format = THREE.RGBAFormat;
+  mirror.getRenderTarget().texture.generateMipmaps = true;
+  mirror.getRenderTarget().texture.minFilter = THREE.LinearMipmapLinearFilter;
+  // The mirror image is the name seen from under the floor. From there the paint would show a different part of
+  // the studio, and the reflected letters would lose their horizon and highlight; a reflection that does not
+  // match what stands above it reads as a mistake. So for the mirror's own render, the paint's studio is aimed
+  // for that lower eye, and the reflected letters carry the same lines as the real ones.
+  const drawMirror = mirror.onBeforeRender;
+  mirror.onBeforeRender = function (...args) {
+    aimReflections(-1);
+    drawMirror.apply(this, args);
+    aimReflections(1);
+  };
 
   // The name.
   const S = 1.3 / G.cap; // capital letters are 1.3 units tall
@@ -210,7 +230,9 @@ export function start(stage, options = {}) {
     mesh.position.x = glyph.x; mesh.castShadow = true; mesh.receiveShadow = true;
     name.add(mesh); letters.push(mesh);
   });
-  name.scale.setScalar(S); name.position.set(-W / 2, 12 * S, -0.12); scene.add(name);
+  // The flat-footed letters (L, k, M) stand on the floor, so each meets its reflection. The round ones (u, e) reach
+  // 10 units below the line, as in the typeface, and sink into the floor by that much.
+  name.scale.setScalar(S); name.position.set(-W / 2, 1 * S, -0.12); scene.add(name);
 
   // Lights. Each has an "on" level; the load sequence raises them one group after another.
   const lights = [];
@@ -251,7 +273,7 @@ export function start(stage, options = {}) {
     const want = (h - (copy ? copy.offsetHeight : 0)) * (aspect < 1 ? 0.55 : 0.6);
     camera.setViewOffset(w, h, 0, Math.round(now - want), w, h);
     camera.updateProjectionMatrix();
-    mirror.material.uniforms.reach.value = dist * 0.58;
+    mirror.material.uniforms.reach.value = dist * 0.6;
     resized = true;
   };
   layout();
@@ -295,9 +317,10 @@ export function start(stage, options = {}) {
     studio.on.value = level.key;
   };
   // A flat face at height h mirrors the room at a slope of (h - camera height) / camera distance.
-  const aimReflections = () => {
-    studio.horizon.value = (REFLECT.horizon - camera.position.y) / dist;
-    studio.strip.value = (REFLECT.strip - camera.position.y) / dist;
+  // (side: 1 for the camera, -1 for the same eye mirrored under the floor.)
+  const aimReflections = (side = 1) => {
+    studio.horizon.value = (REFLECT.horizon - camera.position.y * side) / dist;
+    studio.strip.value = (REFLECT.strip - camera.position.y * side) / dist;
     studio.edge.value = REFLECT.edge / dist;
     studio.fade.value = REFLECT.fade / dist;
   };
