@@ -3,6 +3,7 @@
 // A project marked `inDevelopment` gets the same card with an "Under development" label and no link.
 import type { CollectionEntry } from 'astro:content';
 import Cover from './Cover.astro';
+import Laurel from './Laurel.astro';
 import { groupLabel } from '../data/site';
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 }
 
 const { project } = Astro.props;
-const { title, summary, category, tags, accent, motif, video, poster, placeholder, inDevelopment } = project.data;
+const { title, summary, category, tags, accent, motif, video, poster, placeholder, inDevelopment, award } = project.data;
 const Wrap = inDevelopment ? 'div' : 'a';
 ---
 
@@ -26,6 +27,15 @@ const Wrap = inDevelopment ? 'div' : 'a';
         alt=""
         class={`aspect-video rounded-2xl border border-line${inDevelopment ? '' : ' transition-transform duration-500 group-hover:scale-[1.01]'}`}
       />
+      {/* An award sits on the picture as a white laurel, top left, and stays there while the loop plays. */}
+      {
+        award && (
+          <Laurel
+            {...award}
+            class="pointer-events-none absolute left-[4%] top-[6%] w-[34%] max-w-48 text-white drop-shadow-[0_1px_8px_rgb(0_0_0/0.5)]"
+          />
+        )
+      }
       {
         inDevelopment && (
           <span class="absolute left-3 top-3 rounded-full border border-line bg-bg/80 px-3 py-1 text-xs font-medium text-ink backdrop-blur-sm">
