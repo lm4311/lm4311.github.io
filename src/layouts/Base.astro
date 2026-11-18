@@ -104,7 +104,8 @@ const canonical = new URL(Astro.url.pathname, site.url);
       function tilt(el: HTMLElement) {
         let frame = tiltFrames.get(el);
         if (!frame) {
-          frame = el.querySelector<HTMLElement>('.card-frame, .portrait-stage, img') ?? el;
+          // (.card-hit is a card's flat picture area: it does not move as the card tilts, so the lean is steady.)
+          frame = el.querySelector<HTMLElement>('.card-hit, .portrait-stage, img') ?? el;
           tiltFrames.set(el, frame);
         }
         // data-tilt="14" sets the most the element turns, in degrees (9 by default).
@@ -208,7 +209,9 @@ const canonical = new URL(Astro.url.pathname, site.url);
         cursor.inside = false;
         hover(null);
       }
-      document.addEventListener('mouseout', (e) => !e.relatedTarget && leave());
+      // (Asked of the page as a whole. "mouseout with nowhere to go", the usual test, is not safe: some browsers
+      // report that between two elements of the page too.)
+      document.documentElement.addEventListener('mouseleave', leave);
       // A page change replaces everything under the cursor: forget the old page before it goes.
       document.addEventListener('astro:before-swap', () => {
         hover(null);

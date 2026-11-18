@@ -389,10 +389,25 @@
     --ry: 0deg;
     --px: 0;
     --py: 0;
+  }
+  /* The link itself stays flat: it is what the mouse touches and what a click lands on. */
+  .card-link {
+    position: relative;
+    display: block;
     perspective: 1100px;
   }
+  /* The picture's place, untilted and unseen, above the tilting card: it carries the cursor's word. */
+  .card-hit {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    left: 0;
+    aspect-ratio: 16 / 9;
+  }
+  /* The part that tilts. The mouse passes through it to the flat link and picture area above. */
   .card-body {
-    display: block;
+    pointer-events: none;
     transform-style: preserve-3d;
     transform: rotateX(var(--rx)) rotateY(var(--ry));
     transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
