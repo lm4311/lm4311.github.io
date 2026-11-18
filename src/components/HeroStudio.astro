@@ -11,6 +11,8 @@ import { site } from '../data/site';
 <section class="hero-pin">
   <div class="hero-stage" data-hero>
     <canvas class="absolute inset-0 block h-full w-full" data-hero-canvas aria-hidden="true"></canvas>
+    <!-- On touch screens: the lighting-only version as a still picture, clipped by the scroll (see hero-studio.js). -->
+    <canvas class="hero-still" data-hero-still aria-hidden="true"></canvas>
     <div class="hero-shade" aria-hidden="true"></div>
     <div class="hero-grain" aria-hidden="true"></div>
     <div class="hero-wipe" data-hero-wipe aria-hidden="true">
@@ -57,6 +59,18 @@ import { site } from '../data/site';
     background:
       radial-gradient(120% 90% at 50% 38%, transparent 55%, rgb(4 5 6 / 0.55) 100%),
       linear-gradient(to top, rgb(4 5 6 / 0.94) 0%, rgb(4 5 6 / 0.6) 24%, transparent 50%);
+  }
+  /* The lighting-only still, shown from the left edge up to the divider. */
+  .hero-still {
+    position: absolute;
+    inset: 0;
+    display: none;
+    width: 100%;
+    height: 100%;
+    clip-path: inset(0 calc(100% - var(--split, 0) * 100%) 0 0);
+  }
+  .hero-stage.is-still .hero-still {
+    display: block;
   }
   /* A little film grain over the render. */
   .hero-grain {
@@ -143,14 +157,21 @@ import { site } from '../data/site';
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .hero-stage canvas {
+  .hero-stage [data-hero-canvas] {
     opacity: 0;
     transition: opacity 0.6s;
   }
-  .hero-stage.is-live canvas {
+  .hero-stage.is-live [data-hero-canvas] {
     opacity: 1;
   }
+  /* Blending the grain over the whole frame is costly on a phone, and too fine to see there. */
+  @media (pointer: coarse) {
+    .hero-grain {
+      display: none;
+    }
+  }
   .hero-stage.no-3d canvas,
+  .hero-stage.no-3d .hero-still,
   .hero-stage.no-3d .hero-wipe,
   .hero-stage.no-3d .hero-cue,
   .hero-stage:not(.is-live) .hero-cue {

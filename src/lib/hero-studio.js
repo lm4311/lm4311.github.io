@@ -7,6 +7,10 @@
 // - The scroll wipes the frame from the final render to "lighting only": the same scene with every material
 //   replaced by matte grey clay. Each frame is drawn in two passes, one per side of the divider.
 //
+// On a phone or tablet (a touch screen, no cursor to move the light) nothing in the scene changes once the lights
+// are on, so it is drawn once in each version and kept as two still pictures. Scrolling then only moves a clip
+// edge between them, which costs almost nothing, instead of drawing the 3D scene twice on every frame.
+//
 // Loaded on demand by HeroStudio.astro, so three.js is only fetched on the homepage, after the text is on screen.
 // three is pinned to 0.128.0: the look was tuned against that version's lights and materials.
 import * as THREE from 'three';
@@ -40,9 +44,11 @@ export function start(stage, options = {}) {
   const wipe = stage.querySelector('[data-hero-wipe]');
   const cue = stage.querySelector('[data-hero-cue]');
   const copy = stage.querySelector('[data-hero-copy]');
+  const still = stage.querySelector('[data-hero-still]'); // holds the lighting-only picture on touch screens
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // Phones have very dense screens; 1.5x is sharp enough there and nearly halves the pixels to shade.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -98,12 +104,12 @@ export function start(stage, options = {}) {
   // mirror's own shader (three 0.128 does not draw transparent layers over a mirror).
   const taps = coarse ? 1 : 2; // blur samples each way: 3x3 on phones, 5x5 elsewhere
   const mirror = new Reflector(floorGeo, {
-    textureWidth: coarse ? 1024 : 1536,
-    textureHeight: coarse ? 1024 : 1536,
+    textureWidth: coarse ? 768 : 1536,
+    textureHeight: coarse ? 768 : 1536,
     color: 0xffffff,
     clipBias: 0.003,
     shader: {
-      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null } },
+      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, reach: { value: 7 } },
       vertexShader: `
         uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vWorld;
         void main() {
@@ -112,11 +118,14 @@ export function start(stage, options = {}) {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }`,
       fragmentShader: `
-        uniform vec3 color; uniform sampler2D tDiffuse; varying vec4 vUv; varying vec3 vWorld;
+        uniform vec3 color; uniform sampler2D tDiffuse; uniform float reach; varying vec4 vUv; varying vec3 vWorld;
         void main() {
           vec2 uv = vUv.xy / vUv.w;
-          float d = clamp(vWorld.z / 7.0, 0.0, 1.0);            // 0 under the letters, 1 near the camera
-          float r = (0.0012 + 0.0075 * d) * ${(2 / taps).toFixed(1)};
+          // 0 under the letters, 1 where the reflection has faded out. "reach" grows with the camera's distance:
+          // on a narrow screen the camera stands far back and the reflection stretches further along the floor.
+          float d = clamp(vWorld.z / reach, 0.0, 1.0);
+          // The blur is sized against the letters: it shrinks as the camera stands further back.
+          float r = (0.0012 + 0.0075 * d) * ${(2 / taps).toFixed(1)} * (7.0 / reach);
           vec3 acc = vec3(0.0);
           for (int i = -${taps}; i <= ${taps}; i++) for (int j = -${taps}; j <= ${taps}; j++) acc += texture2D(tDiffuse, uv + vec2(float(i), float(j) * 1.6) * r).rgb;
           acc /= ${((taps * 2 + 1) ** 2).toFixed(1)};
@@ -129,6 +138,8 @@ export function start(stage, options = {}) {
   });
   mirror.rotation.x = -Math.PI / 2; mirror.position.set(0, 0, 20); scene.add(mirror);
   keep(mirror.material); keep(mirror.getRenderTarget());
+  // Some phone GPUs cannot render into a three-channel picture; four channels work everywhere.
+  mirror.getRenderTarget().texture.format = THREE.RGBAFormat;
 
   // The name.
   const S = 1.3 / G.cap; // capital letters are 1.3 units tall
@@ -174,7 +185,7 @@ export function start(stage, options = {}) {
   key.shadow.camera.near = 2; key.shadow.camera.far = 30; on(key, 0.32, 'key');
 
   // Frame the name: about two thirds of the width on a wide screen, more of it on a narrow one.
-  let dist = 12;
+  let dist = 12, resized = false;
   const layout = () => {
     const w = stage.clientWidth, h = stage.clientHeight;
     if (!w || !h) return;
@@ -193,6 +204,8 @@ export function start(stage, options = {}) {
     const want = (h - (copy ? copy.offsetHeight : 0)) * (aspect < 1 ? 0.55 : 0.6);
     camera.setViewOffset(w, h, 0, Math.round(now - want), w, h);
     camera.updateProjectionMatrix();
+    mirror.material.uniforms.reach.value = dist * 0.58;
+    resized = true;
   };
   layout();
   const resizeObserver = new ResizeObserver(layout);
@@ -224,6 +237,47 @@ export function start(stage, options = {}) {
     renderer.render(scene, camera);
   };
 
+  const drawLights = (t) => {
+    // Lights on, one after another: the edges first, then the wall, then the key.
+    const level = { rim: ease((t - 0.3) / 0.8), wash: ease((t - 0.9) / 0.8), key: ease((t - 1.5) / 0.9) };
+    for (const light of lights) light.intensity = light.userData.level * level[light.userData.group];
+  };
+  // Where the divider is: the share of the frame, from the left, that is lighting only.
+  const placeDivider = () => {
+    const split = ease((progress() - 0.03) / 0.9);
+    const w = stage.clientWidth, sx = Math.round(w * split);
+    if (wipe) { wipe.style.transform = `translateX(${sx}px)`; wipe.style.opacity = split > 0.002 && split < 0.998 ? '1' : '0'; }
+    if (cue) cue.style.setProperty('--p', split.toFixed(3));
+    stage.style.setProperty('--split', split.toFixed(4));
+    return sx;
+  };
+
+  // ---- Touch screens: once the lights are on, keep two still pictures and let the scroll move a clip edge. ----
+  const stills = coarse && !!still;
+  let frozen = false, scrollTick = false;
+  const freeze = () => {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    drawLights(99);
+    key.position.set(px * 6.5, 3.2 + (py + 1) * 1.3, 7);
+    camera.position.set(0, 0.78, dist); camera.lookAt(0, 0.02, 0);
+    renderer.setScissorTest(false);
+    // The lighting-only version first, copied into the still picture straight away; then the final version stays
+    // on the 3D canvas underneath it.
+    pass(false, 0, w, h);
+    still.width = canvas.width; still.height = canvas.height;
+    still.getContext('2d').drawImage(canvas, 0, 0);
+    pass(true, 0, w, h);
+    stage.classList.add('is-still');
+    frozen = true; resized = false;
+    placeDivider();
+  };
+  const onScroll = () => {
+    if (!frozen || scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(() => { scrollTick = false; placeDivider(); });
+  };
+  if (stills) addEventListener('scroll', onScroll, { passive: true });
+
   const t0 = performance.now();
   let raf = 0, live = false, stopped = false;
   const frame = (now) => {
@@ -231,24 +285,28 @@ export function start(stage, options = {}) {
     raf = requestAnimationFrame(frame);
     if (!visible) return;
     const t = reduced || forcedSplit != null ? 99 : (now - t0) / 1000;
-    // Lights on, one after another: the edges first, then the wall, then the key.
-    const level = { rim: ease((t - 0.3) / 0.8), wash: ease((t - 0.9) / 0.8), key: ease((t - 1.5) / 0.9) };
-    for (const light of lights) light.intensity = light.userData.level * level[light.userData.group];
-    // With no cursor for a while, the key light drifts slowly on its own.
-    if (!reduced && now - lastMove > 2500) { tx = Math.sin(now / 2900) * 0.5 - 0.1; ty = 0.25 + Math.sin(now / 4100) * 0.2; }
+    if (stills && frozen) {
+      // Nothing moves any more. Draw again only if the screen was turned or resized.
+      if (resized) freeze();
+      return;
+    }
+    drawLights(t);
+    // With no cursor for a while, the key light drifts slowly on its own (not on touch screens, where the
+    // picture is about to be frozen).
+    if (!reduced && !stills && now - lastMove > 2500) { tx = Math.sin(now / 2900) * 0.5 - 0.1; ty = 0.25 + Math.sin(now / 4100) * 0.2; }
     px += (tx - px) * 0.05; py += (ty - py) * 0.05;
     key.position.set(px * 6.5, 3.2 + (py + 1) * 1.3, 7);
-    camera.position.set(reduced ? 0 : px * 0.55, 0.78 + (reduced ? 0 : py * 0.08), dist);
+    camera.position.set(reduced || stills ? 0 : px * 0.55, 0.78 + (reduced || stills ? 0 : py * 0.08), dist);
     camera.lookAt(0, 0.02, 0);
 
-    const split = ease((progress() - 0.03) / 0.9); // the share of the frame, from the left, that is lighting only
-    const w = stage.clientWidth, h = stage.clientHeight, sx = Math.round(w * split);
-    if (wipe) { wipe.style.transform = `translateX(${sx}px)`; wipe.style.opacity = split > 0.002 && split < 0.998 ? '1' : '0'; }
-    if (cue) cue.style.setProperty('--p', split.toFixed(3));
+    const w = stage.clientWidth, h = stage.clientHeight, sx = placeDivider();
     renderer.setScissorTest(true);
     if (sx > 0) pass(false, 0, sx, h);
     if (sx < w) pass(true, sx, w - sx, h);
+    resized = false;
     if (!live) { live = true; onLive?.(); }
+    // The lights are fully on after about two and a half seconds: from then on a touch screen shows stills.
+    if (stills && t > 2.6) freeze();
   };
   raf = requestAnimationFrame(frame);
 
@@ -258,6 +316,7 @@ export function start(stage, options = {}) {
     resizeObserver.disconnect();
     intersectionObserver.disconnect();
     stage.removeEventListener('pointermove', onMove);
+    removeEventListener('scroll', onScroll);
     for (const thing of disposables) thing.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
