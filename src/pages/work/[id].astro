@@ -53,7 +53,8 @@ const hasContents = sections.length >= 3;
 const specs = [
   { label: 'My role', value: d.role },
   { label: 'Team', value: d.team },
-  { label: 'Timeframe', value: d.duration ? `${d.duration} · ${d.year}` : String(d.year) },
+  // The year is added only when the timeframe doesn't already name one ("September 2024 to present" stands as it is).
+  { label: 'Timeframe', value: d.duration ? (/\b(19|20)\d\d\b/.test(d.duration) ? d.duration : `${d.duration} · ${d.year}`) : String(d.year) },
   { label: 'Platform', value: d.platform },
   { label: 'Client', value: d.client },
 ].filter((m) => m.value);
