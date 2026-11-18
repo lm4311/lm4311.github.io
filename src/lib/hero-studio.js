@@ -1,7 +1,9 @@
 // The homepage opening: the name as a 3D object in a dark studio, rendered live with three.js.
 //
 // - The letters are the real outlines of Instrument Sans (src/data/hero-glyphs.json, made by scripts/hero-glyphs.mjs),
-//   extruded, with painted faces and polished metal edges, standing on a polished floor that mirrors them.
+//   extruded with rounded edges and finished in car paint (a metallic base under a clear coat), standing on a
+//   polished floor that mirrors them. What makes paint read as paint is what it reflects, so the scene carries
+//   its own studio for that: see "What the paint reflects" below.
 // - On load the lights come on one after another: the edge lights, the wall light, then the key.
 // - The cursor moves the key light (and the camera, very slightly).
 // - The scroll wipes the frame from the final render to "lighting only": the same scene with every material
@@ -25,17 +27,6 @@ import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLigh
 import G from '../data/hero-glyphs.json';
 
 const ease = (t) => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
-
-/** A 1D gradient as a texture: stops are [position 0..1, css colour]. */
-function ramp(stops) {
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 4;
-  const g = c.getContext('2d');
-  const gr = g.createLinearGradient(0, 0, 256, 0);
-  stops.forEach(([at, colour]) => gr.addColorStop(at, colour));
-  g.fillStyle = gr; g.fillRect(0, 0, 256, 4);
-  return new THREE.CanvasTexture(c);
-}
 
 /**
  * Starts the scene.
@@ -68,23 +59,27 @@ export function start(stage, options = {}) {
   const disposables = [];
   const keep = (thing) => { disposables.push(thing); return thing; };
 
-  // What the paint and the metal reflect: a dark room with long soft boxes.
+  // ---- What the paint reflects ----
+  // A dark studio with soft boxes far brighter than white (the clear coat on paint reflects only a few percent of
+  // what is in front of it, so only very bright lights show up crisply in it, as on a real car).
   const envScene = new THREE.Scene();
   envScene.background = new THREE.Color(0x010102);
-  const strip = (w, h, x, y, z, colour) => {
-    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, h)), keep(new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide })));
+  const box = (w, h, x, y, z, colour, power = 1) => {
+    const material = keep(new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide }));
+    material.color.multiplyScalar(power);
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, h)), material);
     m.position.set(x, y, z); m.lookAt(0, 0.5, 0); envScene.add(m);
   };
-  strip(14, 2.2, 0, 8, 3, 0xffffff); // overhead soft box
-  strip(1.2, 9, -9, 2.5, 1, 0xcfe0ff); // left strip
-  strip(1.2, 9, 9, 2.5, -1, 0xffffff); // right strip
-  strip(22, 1.0, 0, 0.6, -9, 0x6f8fb5); // horizon glow
-  // Behind the camera: a soft gradient, bright on the left and dark on the right, so the paint is never one flat tone.
-  const backTexture = keep(ramp([[0, '#0b0c0e'], [0.38, '#30353c'], [0.72, '#aab3bd'], [1, '#d9dee4']]));
-  const back = new THREE.Mesh(keep(new THREE.PlaneGeometry(44, 14)), keep(new THREE.MeshBasicMaterial({ map: backTexture, side: THREE.DoubleSide })));
-  back.position.set(0, 4, 13); back.lookAt(0, 4, 0); envScene.add(back);
+  box(16, 2.6, 0, 8.5, 2.5, 0xffffff, 9); // overhead soft box: the long highlight along the tops of the letters
+  box(1.1, 9, -9.5, 2.5, 1, 0xd6e4ff, 7); // left strip: catches the rounded edges on the left
+  box(1.1, 9, 9.5, 2.5, -1, 0xffffff, 7); // right strip
+  box(24, 1.0, 0, 0.6, -9, 0x6f8fb5, 1.2); // horizon glow behind the name
+  // Behind the camera: a dim glow, so the faces are never black. The sharp reflections on the faces (the horizon
+  // and the strip light) are drawn by the paint itself, below: a reflection map this size is too coarse to hold a
+  // crisp line across a flat letter, which only looks at a few degrees of the room.
+  box(46, 14, 0, 4, 13, 0x8d97a3, 0.16);
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const envTarget = keep(pmrem.fromScene(envScene, 0.02));
+  const envTarget = keep(pmrem.fromScene(envScene, 0.012));
   const env = envTarget.texture;
   pmrem.dispose();
 
@@ -151,9 +146,51 @@ export function start(stage, options = {}) {
   const S = 1.3 / G.cap; // capital letters are 1.3 units tall
   const W = G.width * S;
   const clay = keep(new THREE.MeshStandardMaterial({ color: 0xc9c9c6, roughness: 0.9 }));
-  const paint = keep(new THREE.MeshPhysicalMaterial({ color: 0x3c70b0, metalness: 0.78, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08, envMap: env, envMapIntensity: 1.25 }));
-  const metal = keep(new THREE.MeshStandardMaterial({ color: 0xe9ecf0, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 }));
-  const finalMaterials = [paint, metal]; // [faces, sides and bevels]
+  // Car paint, in two layers as on a car. Underneath, a metallic base coat in deep blue, smooth enough to mirror
+  // the studio, so the reflections come back tinted with the paint's colour. On top, a clear coat: perfectly
+  // smooth, adding the small white highlights of the lights themselves.
+  // (No flake texture: at this size it only reads as grain, and any bumpiness makes the renderer blur the
+  // reflections, which is the opposite of a polished finish.)
+  const paint = keep(new THREE.MeshPhysicalMaterial({
+    color: 0x1450b4, metalness: 1, roughness: 0.06,
+    clearcoat: 1, clearcoatRoughness: 0.02,
+    envMap: env, envMapIntensity: 1.0,
+  }));
+  // The studio as the polished faces see it, worked out per pixel so it stays sharp at any size: a wall of light
+  // above a dark floor, meeting in a horizon, and one long strip light above it. A flat face mirrors them as a
+  // line partway up the letters, deep below and bright above, with a thin highlight running through the whole
+  // name: what the side of a car shows in a studio. On the rounded edges the same lights wrap into fine glints.
+  // Heights are given on the letters (0 = the floor, 1.3 = the top of a capital); frame() turns them into the
+  // slopes the shader compares against, which depend on where the camera is.
+  const REFLECT = { horizon: 0.46, strip: 0.8, edge: 0.022, fade: 1.0 };
+  const studio = { horizon: { value: 0 }, strip: { value: 0 }, edge: { value: 0.001 }, fade: { value: 0.1 }, on: { value: 0 } };
+  paint.onBeforeCompile = (shader) => {
+    shader.uniforms.uHorizon = studio.horizon;
+    shader.uniforms.uStrip = studio.strip;
+    shader.uniforms.uEdge = studio.edge;
+    shader.uniforms.uFade = studio.fade;
+    shader.uniforms.uOn = studio.on;
+    shader.fragmentShader = shader.fragmentShader
+      .replace('void main() {', 'uniform float uHorizon; uniform float uStrip; uniform float uEdge; uniform float uFade; uniform float uOn;\nvoid main() {')
+      .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+        {
+          vec3 seen = inverseTransformDirection(reflect(-normalize(vViewPosition), normal), viewMatrix); // where this pixel's mirror image comes from
+          float toward = smoothstep(0.25, 0.7, seen.z);            // only the side of the room behind the camera
+          // How far above or below level it looks. The lines lean a little across the name (the 0.034), as a
+          // light set at an angle would; dead level, they read as a painted stripe instead of a reflection.
+          float slope = seen.y / max(seen.z, 0.05) - seen.x * 0.034;
+          float above = smoothstep(uHorizon - uEdge, uHorizon + uEdge, slope);
+          // The wall of light: strongest just above the horizon, falling away toward the top of the letters.
+          float wall = above * mix(1.0, 0.16, smoothstep(0.0, 1.0, (slope - uHorizon) / uFade));
+          // The floor: dark, lifting slightly as it nears the horizon.
+          float ground = (1.0 - above) * 0.13 * smoothstep(-uFade * 0.55, 0.0, slope - uHorizon);
+          // The strip light: a fine core with a soft glow around it.
+          float away = abs(slope - uStrip) / uEdge;
+          float strip = (1.0 - smoothstep(0.3, 1.0, away)) + 0.22 * exp(-away * away * 0.09);
+          // The base coat tints what it mirrors; the clear coat adds a little of the strip light untinted.
+          reflectedLight.indirectSpecular += uOn * toward * (material.specularColor * ((wall + ground) * 0.9 + strip * 6.5) + vec3(strip * 0.42));
+        }`);
+  };
   const name = new THREE.Group();
   const letters = [];
   const v2 = (p) => new THREE.Vector2(p[0], p[1]);
@@ -163,9 +200,11 @@ export function start(stage, options = {}) {
       poly.h.forEach((hole) => shape.holes.push(new THREE.Path(hole.map(v2))));
       return shape;
     });
-    // Font units: 110 deep, with a small rounded bevel that is taken back out of the outline so the weight stays true.
-    const geo = keep(new THREE.ExtrudeGeometry(shapes, { depth: 110, bevelEnabled: true, bevelThickness: 8, bevelSize: 6, bevelOffset: -6, bevelSegments: 5 }));
-    const mesh = new THREE.Mesh(geo, finalMaterials);
+    // Font units: 100 deep, with wide rounded edges, like a pressed panel. Curved surfaces are what catch a
+    // studio's lights; a flat face only shows one patch of it. The rounding is taken back out of the outline
+    // (bevelOffset) so the letters keep their true weight.
+    const geo = keep(new THREE.ExtrudeGeometry(shapes, { depth: 100, bevelEnabled: true, bevelThickness: 22, bevelSize: 17, bevelOffset: -17, bevelSegments: 10 }));
+    const mesh = new THREE.Mesh(geo, paint);
     mesh.position.x = glyph.x; mesh.castShadow = true; mesh.receiveShadow = true;
     name.add(mesh); letters.push(mesh);
   });
@@ -240,7 +279,7 @@ export function start(stage, options = {}) {
   const pass = (final, x, w, h) => {
     floorClay.visible = !final; mirror.visible = final;
     wall.material = final ? wallFinal : wallClay;
-    for (const letter of letters) letter.material = final ? finalMaterials : clay;
+    for (const letter of letters) letter.material = final ? paint : clay;
     renderer.setScissor(x, 0, w, h);
     renderer.render(scene, camera);
   };
@@ -249,6 +288,16 @@ export function start(stage, options = {}) {
     // Lights on, one after another: the edges first, then the wall, then the key.
     const level = { rim: ease((t - 0.3) / 0.8), wash: ease((t - 0.9) / 0.8), key: ease((t - 1.5) / 0.9) };
     for (const light of lights) light.intensity = light.userData.level * level[light.userData.group];
+    // The paint's reflections come on with the lights it reflects: a little with the edge lights, the rest with the key.
+    paint.envMapIntensity = 0.3 * level.rim + 0.7 * level.key;
+    studio.on.value = level.key;
+  };
+  // A flat face at height h mirrors the room at a slope of (h - camera height) / camera distance.
+  const aimReflections = () => {
+    studio.horizon.value = (REFLECT.horizon - camera.position.y) / dist;
+    studio.strip.value = (REFLECT.strip - camera.position.y) / dist;
+    studio.edge.value = REFLECT.edge / dist;
+    studio.fade.value = REFLECT.fade / dist;
   };
   // Where the divider should be: the share of the frame, from the left, that is lighting only.
   const wanted = () => ease((progress() - 0.03) / 0.9);
@@ -276,6 +325,7 @@ export function start(stage, options = {}) {
     drawLights(99);
     key.position.set(px * 6.5, 3.2 + (py + 1) * 1.3, 7);
     camera.position.set(0, 0.78, dist); camera.lookAt(0, 0.02, 0);
+    aimReflections();
     renderer.setScissorTest(false);
     // The lighting-only version first, copied into the still picture straight away; then the final version stays
     // on the 3D canvas underneath it.
@@ -322,6 +372,7 @@ export function start(stage, options = {}) {
     key.position.set(px * 6.5, 3.2 + (py + 1) * 1.3, 7);
     camera.position.set(reduced || stills ? 0 : px * 0.55, 0.78 + (reduced || stills ? 0 : py * 0.08), dist);
     camera.lookAt(0, 0.02, 0);
+    aimReflections();
 
     // The first frame starts in place; after that the divider glides.
     glide(reduced || !live || forcedSplit != null ? 0 : 95);
