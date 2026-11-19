@@ -17,7 +17,7 @@ export const site = {
     // Add the full profile address, e.g. 'https://www.linkedin.com/in/...'. Empty hides the LinkedIn buttons.
     linkedin: 'https://www.linkedin.com/in/lejia-mu',
   },
-  // The résumé is public/resume.pdf (currently the October 2025 version). Replace that file to update it.
+  // The résumé is public/resume.pdf (currently the November 2026 version, made from WixSite/DOCUMENT/Lejia Mu_Resume_2026.docx). Replace that file to update it.
   resume: '/resume.pdf',
   // A portrait for the About page: put the image in public/ and give its path, e.g. '/portrait.webp'.
   portrait: '/portrait.webp',
