@@ -50,6 +50,15 @@ export const about = [
   'Right now I’m building a VR showroom for the Bugatti Tourbillon, where visitors explore and configure the car at full scale. I’m looking for a role in XR or real-time 3D where I can both design and build.',
 ];
 
+// The ASUS interview on the About page (#interview). The video is in public/media/asus-interview/.
+export const interview = {
+  title: 'When Details Matter',
+  source: 'ASUS USA',
+  date: 'September 2026',
+  url: 'https://www.instagram.com/asususa/reel/DdCKIrxj9jv/',
+  text: 'ASUS USA interviewed me about my real-time visualization work on the Bugatti Tourbillon in Unreal Engine 5, for a ProArt by ASUS and NYU Tandon feature.',
+};
+
 // Main capabilities, shown in the introduction at the end of the homepage and on the About page.
 export const capabilities = [
   'XR development in Unreal Engine with C++, Blueprints and OpenXR',

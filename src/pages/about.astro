@@ -2,8 +2,9 @@
 import Base from '../layouts/Base.astro';
 import Skills from '../components/Skills.astro';
 import Experience from '../components/Experience.astro';
+import Video from '../components/Video.astro';
 import { getProjects } from '../lib/work';
-import { site, about, capabilities } from '../data/site';
+import { site, about, capabilities, interview } from '../data/site';
 
 // The text lives in src/data/site.ts. A project's title in it becomes a link to that project's page.
 const projects = (await getProjects()).filter((p) => !p.data.inDevelopment);
@@ -69,6 +70,35 @@ const paragraphs = about.map((text) =>
         {site.resume && <a href={site.resume} class="btn">Résumé (PDF)</a>}
       </div>
     </aside>
+  </section>
+
+  <!-- The ASUS interview (a vertical Instagram reel), hosted here with a link to the original post. -->
+  <section id="interview" class="container-x scroll-mt-20 border-t border-line py-16 sm:py-20">
+    <h2 class="font-display text-3xl sm:text-4xl" data-rise>Interview</h2>
+    <div class="mt-10 grid items-center gap-10 sm:grid-cols-[minmax(0,20rem)_1fr] sm:gap-14 lg:gap-20" data-rise>
+      <div class="max-w-xs sm:max-w-none">
+        <Video
+          src="/media/asus-interview/when-details-matter.mp4"
+          poster="/media/asus-interview/when-details-matter.webp"
+          ratio="9 / 16"
+          title="When Details Matter, an interview by ASUS USA"
+          class=""
+        />
+        <a
+          href={interview.url}
+          target="_blank"
+          rel="noopener"
+          class="mt-4 inline-block text-sm text-muted underline decoration-ink/30 underline-offset-4 hover:text-ink hover:decoration-ink"
+        >
+          Watch the original reel on Instagram ↗
+        </a>
+      </div>
+      <div class="max-w-xl">
+        <p class="label">{interview.source} · {interview.date}</p>
+        <h3 class="mt-3 font-display text-2xl sm:text-3xl">{interview.title}</h3>
+        <p class="mt-5 text-lg leading-8 text-ink/85">{interview.text}</p>
+      </div>
+    </div>
   </section>
 
   <section class="container-x border-t border-line py-16 sm:py-20">
